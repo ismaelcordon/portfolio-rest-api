@@ -30,7 +30,7 @@ export default defineConfig({
             DB_USER: process.env.DB_USER || "postgres",
             DB_PASSWORD: process.env.DB_PASSWORD || "postgres",
             NODE_ENV: "test",
-            API_KEY: process.env.test || "test-api-key",
+            API_KEY: process.env.API_KEY || "test-api-key",
         },
         coverage: {
             provider: "v8",

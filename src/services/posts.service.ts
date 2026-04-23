@@ -143,3 +143,29 @@ export const destroyPost = async (postId: number) => {
         );
     }
 };
+
+export const updatePostToPublished = async (postId: number) => {
+    try {
+        const post = await PostModel.findByPk(postId);
+
+        if (!post) {
+            throw new NotFoundException(`Post with id ${postId} not found`);
+        }
+
+        if (post.status === PostStatus.PUBLISHED) {
+            throw new ConflictException(
+                `Post with id ${postId} is already published`,
+            );
+        }
+
+        await post.update({
+            status: PostStatus.PUBLISHED,
+            publishedAt: new Date(),
+        });
+    } catch (error) {
+        if (error instanceof CustomException) throw error;
+        throw new InternalServerException(
+            error instanceof Error ? error.message : "Unexpected error",
+        );
+    }
+};

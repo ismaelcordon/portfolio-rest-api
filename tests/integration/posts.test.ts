@@ -14,7 +14,9 @@ import { PostStatus } from "#types/post.types.js";
 
 const createNewPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}`;
 const findPostByIdEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
-const findAllPostsEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}`;
+const hidePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.HIDE_BY_ID}`;
+const deletePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
+const publishPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.PUBLISH_BY_ID}`;
 
 describe("Posts", () => {
     describe("Find all posts", () => {
@@ -305,9 +307,6 @@ describe("Posts", () => {
         });
     });
 
-    const hidePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.HIDE_BY_ID}`;
-    const deletePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
-
     describe("Hide post", () => {
         it("Should return 401 if api key is not provided", async () => {
             // Arrange
@@ -433,6 +432,74 @@ describe("Posts", () => {
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.NO_CONTENT);
             expect(deletedPost).toBeNull();
+        });
+    });
+
+    describe("Publish post", () => {
+        it("Should return 404 if post does not exist", async () => {
+            // Arrange
+            const app = createApp();
+
+            // Act
+            const response = await request(app).patch(
+                publishPostEndpoint.replace(":id", "999"),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
+        });
+
+        it("Should return 409 if post is already published", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.PUBLISHED,
+                tagId: 1,
+                publishedAt: new Date(),
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app).patch(
+                publishPostEndpoint.replace(":id", String(createdPost.postId)),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.CONFLICT);
+        });
+
+        it("Should publish a post successfully", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.DRAFT,
+                tagId: 1,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app).patch(
+                publishPostEndpoint.replace(":id", String(createdPost.postId)),
+            );
+
+            const postDB = await PostModel.findByPk(createdPost.postId);
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
+            expect(postDB?.status).toBe(PostStatus.PUBLISHED);
+            expect(postDB?.publishedAt).not.toBeNull();
         });
     });
 });

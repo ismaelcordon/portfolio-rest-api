@@ -4,6 +4,7 @@ import {
     getAllPosts,
     getPostById,
     hidePost,
+    publishPost,
 } from "#controllers/posts.controller.js";
 import { validateBody } from "#middlewares/validate-body.middleware.js";
 import { createPostValidator } from "#validators/create-post-validator.js";
@@ -53,5 +54,7 @@ router.delete(
     validateBody,
     deletePost,
 );
+
+router.patch(API_ROUTES.POSTS.PUBLISH_BY_ID, publishPost);
 
 export default router;

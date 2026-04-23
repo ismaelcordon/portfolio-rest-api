@@ -8,6 +8,7 @@ import {
     findPostById,
     insertNewPost,
     updatePostToHidden,
+    updatePostToPublished,
 } from "#services/posts.service.js";
 import { HTTP_STATUSES } from "#utils/constants.utils";
 
@@ -117,6 +118,26 @@ export const deletePost = async (req: Request, res: Response) => {
         await destroyPost(postId);
 
         return res.status(HTTP_STATUSES.NO_CONTENT).send();
+    } catch (error) {
+        if (error instanceof CustomException) {
+            return sendError(
+                res,
+                error.message,
+                error.code,
+                null,
+                error.statusCode,
+            );
+        }
+        return sendError(res, "Unexpected error", "UNKNOWN_ERROR");
+    }
+};
+
+export const publishPost = async (req: Request, res: Response) => {
+    try {
+        const postId = parseInt(req.params.id as string);
+        await updatePostToPublished(postId);
+
+        return sendSuccess(res, "Post published successfully");
     } catch (error) {
         if (error instanceof CustomException) {
             return sendError(

@@ -21,3 +21,5 @@ export const API_ROUTES = {
         },
     },
 };
+
+export const POSTS_PER_PAGE = 20;

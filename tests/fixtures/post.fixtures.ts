@@ -59,3 +59,20 @@ export const createPostDtoWithInvalidTagId = {
 export const createTagDTO = {
     description: "TypeScript",
 };
+
+export const mockPostList = Array.from({ length: 20 }, (_, i) => ({
+    ...mockPost,
+    postId: i + 1,
+    tagId: i % 2 === 0 ? 1 : 2,
+}));
+
+export const mockPaginatedPostsDto = {
+    data: Array.from({ length: 20 }, () => ({ ...mockPostDto })),
+    meta: {
+        total: 40,
+        page: 1,
+        totalPages: 2,
+        hasNextPage: true,
+        hasPrevPage: false,
+    },
+};

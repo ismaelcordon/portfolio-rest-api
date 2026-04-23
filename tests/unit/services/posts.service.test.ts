@@ -5,9 +5,11 @@ import {
     checkPostTagsByIds,
 } from "#services/post-tags.service.js";
 import {
+    destroyPost,
     findAllPosts,
     findPostById,
     insertNewPost,
+    updatePostToHidden,
 } from "#services/posts.service.js";
 import {
     toPaginatedPostsResponseDto,
@@ -17,6 +19,7 @@ import { NotFoundException } from "#exceptions/not-found.exception";
 import { InternalServerException } from "#exceptions/internal-server.exception.js";
 import {
     mockCreatePostDto,
+    mockHiddenPost,
     mockPaginatedPostsDto,
     mockPost,
     mockPostDto,
@@ -24,6 +27,9 @@ import {
 } from "../../fixtures/post.fixtures.js";
 import { mockTag } from "../../fixtures/post-tags.fixtures.js";
 import { Op, where } from "sequelize";
+import { deletePost } from "#controllers/posts.controller.js";
+import { ConflictException } from "#exceptions/conflict.exception.js";
+import { PostStatus } from "#types/post.types.js";
 
 vi.mock("#models/sequelize/post.sequelize.js", () => {
     return {
@@ -60,118 +66,6 @@ vi.mock("#mappers/post.mappers.js", () => {
 describe("post.service", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-    });
-
-    describe("findPostById", () => {
-        it("Should return a post if exists", async () => {
-            // Arrange
-            vi.mocked(PostModel.findByPk).mockResolvedValue(mockPost);
-            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
-            vi.mocked(toPostResponseDto).mockReturnValue(mockPostDto);
-
-            // Act
-            const result = await findPostById(mockPost.postId);
-
-            // Assert
-            expect(PostModel.findByPk).toHaveBeenCalledWith(1);
-            expect(checkPostTagById).toHaveBeenCalledWith(1);
-            expect(toPostResponseDto).toHaveBeenCalledWith(mockPost, mockTag);
-            expect(result).toEqual(mockPostDto);
-        });
-
-        it("Should throw NotFoundException when post does not exist", async () => {
-            // Arrange
-            vi.mocked(PostModel.findByPk).mockResolvedValue(null);
-
-            // Act
-            const result = findPostById(999);
-
-            // Assert
-            await expect(result).rejects.toThrow(NotFoundException);
-            await expect(result).rejects.toThrow("Post with id 999 not found");
-            expect(checkPostTagById).not.toHaveBeenCalled();
-            expect(toPostResponseDto).not.toHaveBeenCalled();
-        });
-
-        it("Should throw InternalServerException when an enexpected error occurs", async () => {
-            // Arrange
-            vi.mocked(PostModel.findByPk).mockRejectedValue(
-                new Error("Database crashed"),
-            );
-
-            // Act
-            const result = findPostById(1);
-
-            // Assert
-            await expect(result).rejects.toThrow(InternalServerException);
-            await expect(result).rejects.toThrow("Database crashed");
-            expect(checkPostTagById).not.toHaveBeenCalled();
-            expect(toPostResponseDto).not.toHaveBeenCalled();
-        });
-    });
-
-    describe("insertNewPost", () => {
-        it("Should create and return a new post", async () => {
-            // Arrange
-            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
-            vi.mocked(PostModel.create).mockResolvedValue(mockPost);
-            vi.mocked(toPostResponseDto).mockReturnValue(mockPostDto);
-
-            // Act
-            const result = await insertNewPost(mockCreatePostDto);
-
-            // Assert
-            expect(checkPostTagById).toHaveBeenCalledWith(
-                mockCreatePostDto.tagId,
-            );
-            expect(PostModel.create).toHaveBeenCalledWith({
-                title: mockCreatePostDto.title,
-                description: mockCreatePostDto.description,
-                content: mockCreatePostDto.content,
-                readingTime: mockCreatePostDto.readingTime,
-                status: mockCreatePostDto.status,
-                tagId: mockCreatePostDto.tagId,
-            });
-            expect(toPostResponseDto).toHaveBeenCalledWith(mockPost, mockTag);
-            expect(result).toEqual(mockPostDto);
-        });
-
-        it("Should throw NotFoundException when post does not exist", async () => {
-            // Arrange
-            vi.mocked(checkPostTagById).mockRejectedValue(
-                new NotFoundException(
-                    `Post tag with id: ${mockCreatePostDto.tagId}, not found.`,
-                ),
-            );
-
-            const result = insertNewPost(mockCreatePostDto);
-
-            // Act
-            await expect(result).rejects.toThrow(NotFoundException);
-            await expect(result).rejects.toThrow(
-                `Post tag with id: ${mockCreatePostDto.tagId}, not found.`,
-            );
-
-            // Assert
-            expect(PostModel.create).not.toHaveBeenCalled();
-            expect(toPostResponseDto).not.toHaveBeenCalled();
-        });
-
-        it("Should throw InternalServerException when an enexpected error occurs", async () => {
-            // Arrange
-            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
-            vi.mocked(PostModel.create).mockRejectedValue(
-                new Error("Database crashed"),
-            );
-
-            // Act
-            const result = insertNewPost(mockCreatePostDto);
-
-            // Assert
-            await expect(result).rejects.toThrow(InternalServerException);
-            await expect(result).rejects.toThrow("Database crashed");
-            expect(toPostResponseDto).not.toHaveBeenCalled();
-        });
     });
 
     describe("findAllPosts", () => {
@@ -343,6 +237,233 @@ describe("post.service", () => {
             await expect(result).rejects.toThrow("Database crashed");
             expect(checkPostTagsByIds).not.toHaveBeenCalled();
             expect(toPostResponseDto).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("findPostById", () => {
+        it("Should return a post if exists", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(mockPost);
+            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
+            vi.mocked(toPostResponseDto).mockReturnValue(mockPostDto);
+
+            // Act
+            const result = await findPostById(mockPost.postId);
+
+            // Assert
+            expect(PostModel.findByPk).toHaveBeenCalledWith(1);
+            expect(checkPostTagById).toHaveBeenCalledWith(1);
+            expect(toPostResponseDto).toHaveBeenCalledWith(mockPost, mockTag);
+            expect(result).toEqual(mockPostDto);
+        });
+
+        it("Should throw NotFoundException when post does not exist", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(null);
+
+            // Act
+            const result = findPostById(999);
+
+            // Assert
+            await expect(result).rejects.toThrow(NotFoundException);
+            await expect(result).rejects.toThrow("Post with id 999 not found");
+            expect(checkPostTagById).not.toHaveBeenCalled();
+            expect(toPostResponseDto).not.toHaveBeenCalled();
+        });
+
+        it("Should throw InternalServerException when an enexpected error occurs", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            const result = findPostById(1);
+
+            // Assert
+            await expect(result).rejects.toThrow(InternalServerException);
+            await expect(result).rejects.toThrow("Database crashed");
+            expect(checkPostTagById).not.toHaveBeenCalled();
+            expect(toPostResponseDto).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("insertNewPost", () => {
+        it("Should create and return a new post", async () => {
+            // Arrange
+            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
+            vi.mocked(PostModel.create).mockResolvedValue(mockPost);
+            vi.mocked(toPostResponseDto).mockReturnValue(mockPostDto);
+
+            // Act
+            const result = await insertNewPost(mockCreatePostDto);
+
+            // Assert
+            expect(checkPostTagById).toHaveBeenCalledWith(
+                mockCreatePostDto.tagId,
+            );
+            expect(PostModel.create).toHaveBeenCalledWith({
+                title: mockCreatePostDto.title,
+                description: mockCreatePostDto.description,
+                content: mockCreatePostDto.content,
+                readingTime: mockCreatePostDto.readingTime,
+                status: mockCreatePostDto.status,
+                tagId: mockCreatePostDto.tagId,
+            });
+            expect(toPostResponseDto).toHaveBeenCalledWith(mockPost, mockTag);
+            expect(result).toEqual(mockPostDto);
+        });
+
+        it("Should throw NotFoundException when post does not exist", async () => {
+            // Arrange
+            vi.mocked(checkPostTagById).mockRejectedValue(
+                new NotFoundException(
+                    `Post tag with id: ${mockCreatePostDto.tagId}, not found.`,
+                ),
+            );
+
+            const result = insertNewPost(mockCreatePostDto);
+
+            // Act
+            await expect(result).rejects.toThrow(NotFoundException);
+            await expect(result).rejects.toThrow(
+                `Post tag with id: ${mockCreatePostDto.tagId}, not found.`,
+            );
+
+            // Assert
+            expect(PostModel.create).not.toHaveBeenCalled();
+            expect(toPostResponseDto).not.toHaveBeenCalled();
+        });
+
+        it("Should throw InternalServerException when an enexpected error occurs", async () => {
+            // Arrange
+            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
+            vi.mocked(PostModel.create).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            const result = insertNewPost(mockCreatePostDto);
+
+            // Assert
+            await expect(result).rejects.toThrow(InternalServerException);
+            await expect(result).rejects.toThrow("Database crashed");
+            expect(toPostResponseDto).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("hidePost", () => {
+        it("Should hide a post successfully", async () => {
+            // Arrange
+            const mockPostWithUpdate = {
+                ...mockPost,
+                update: vi.fn().mockResolvedValue(undefined),
+            };
+            vi.mocked(PostModel.findByPk).mockResolvedValue(
+                mockPostWithUpdate as any,
+            );
+            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
+
+            // Act
+            await updatePostToHidden(mockPost.postId);
+
+            // Assert
+            expect(PostModel.findByPk).toHaveBeenCalledWith(mockPost.postId);
+            expect(mockPostWithUpdate.update).toHaveBeenCalledWith({
+                status: PostStatus.HIDDEN,
+            });
+        });
+
+        it("Should throw NotFoundException when post does not exist", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(null);
+
+            // Act
+            const result = updatePostToHidden(999);
+
+            // Assert
+            await expect(result).rejects.toThrow(NotFoundException);
+            await expect(result).rejects.toThrow("Post with id 999 not found");
+            expect(checkPostTagById).not.toHaveBeenCalled();
+            expect(toPostResponseDto).not.toHaveBeenCalled();
+        });
+
+        it("Should throw ConflictException when post is already hidden", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(mockHiddenPost);
+
+            // Act
+            const result = updatePostToHidden(mockHiddenPost.postId);
+
+            // Assert
+            await expect(result).rejects.toThrow(ConflictException);
+            await expect(result).rejects.toThrow(
+                `Post with id ${mockHiddenPost.postId} is already hidden`,
+            );
+            expect(checkPostTagById).not.toHaveBeenCalled();
+            expect(toPostResponseDto).not.toHaveBeenCalled();
+        });
+
+        it("Should throw InternalServerException when an unexpected error occurs", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            const result = destroyPost(1);
+
+            // Assert
+            await expect(result).rejects.toThrow(InternalServerException);
+            await expect(result).rejects.toThrow("Database crashed");
+            expect(checkPostTagById).not.toHaveBeenCalled();
+            expect(toPostResponseDto).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("deletePost", () => {
+        it("Should delete a post successfully", async () => {
+            // Arrange
+            const mockPostWithDestroy = {
+                ...mockPost,
+                destroy: vi.fn().mockResolvedValue(undefined),
+            };
+            vi.mocked(PostModel.findByPk).mockResolvedValue(
+                mockPostWithDestroy as any,
+            );
+
+            // Act
+            await destroyPost(mockPost.postId);
+
+            // Assert
+            expect(PostModel.findByPk).toHaveBeenCalledWith(mockPost.postId);
+            expect(mockPostWithDestroy.destroy).toHaveBeenCalled();
+        });
+
+        it("Should throw NotFoundException when post does not exist", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(null);
+
+            // Act
+            const result = destroyPost(999);
+
+            // Assert
+            await expect(result).rejects.toThrow(NotFoundException);
+            await expect(result).rejects.toThrow("Post with id 999 not found");
+        });
+
+        it("Should throw InternalServerException when an unexpected error occurs", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            const result = destroyPost(1);
+
+            // Assert
+            await expect(result).rejects.toThrow(InternalServerException);
+            await expect(result).rejects.toThrow("Database crashed");
         });
     });
 });

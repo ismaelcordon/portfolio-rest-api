@@ -11,6 +11,7 @@ import {
     toPostResponseDto,
 } from "../mappers/post.mappers";
 import { checkPostTagById, checkPostTagsByIds } from "./post-tags.service";
+import { ConflictException } from "#exceptions/conflict.exception";
 
 export const findAllPosts = async (
     page: number,
@@ -89,6 +90,46 @@ export const insertNewPost = async (postData: CreatePostRequestDto) => {
         });
 
         return toPostResponseDto(newPost, tag);
+    } catch (error) {
+        if (error instanceof CustomException) throw error;
+        throw new InternalServerException(
+            error instanceof Error ? error.message : "Unexpected error",
+        );
+    }
+};
+
+export const updatePostToHidden = async (postId: number) => {
+    try {
+        const post = await PostModel.findByPk(postId);
+
+        if (!post) {
+            throw new NotFoundException(`Post with id ${postId} not found`);
+        }
+
+        if (post.status === PostStatus.HIDDEN) {
+            throw new ConflictException(
+                `Post with id ${postId} is already hidden`,
+            );
+        }
+
+        await post.update({ status: PostStatus.HIDDEN });
+    } catch (error) {
+        if (error instanceof CustomException) throw error;
+        throw new InternalServerException(
+            error instanceof Error ? error.message : "Unexpected error",
+        );
+    }
+};
+
+export const destroyPost = async (postId: number) => {
+    try {
+        const post = await PostModel.findByPk(postId);
+
+        if (!post) {
+            throw new NotFoundException(`Post with id ${postId} not found`);
+        }
+
+        await post.destroy();
     } catch (error) {
         if (error instanceof CustomException) throw error;
         throw new InternalServerException(

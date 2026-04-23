@@ -76,3 +76,8 @@ export const mockPaginatedPostsDto = {
         hasPrevPage: false,
     },
 };
+
+export const mockHiddenPost = {
+    ...mockPost,
+    status: PostStatus.HIDDEN,
+} as any;

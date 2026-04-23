@@ -16,84 +16,6 @@ const findPostByIdEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_RO
 const findAllPostsEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}`;
 
 describe("Posts", () => {
-    describe("Insert new post", () => {
-        it("Return 404 if tag id does not exist", async () => {
-            // Arrange
-            await TagModel.create(createTagDTO);
-            const app = createApp();
-
-            // Act
-            const response = await request(app)
-                .post(createNewPostEndpoint)
-                .send(createPostDtoWithInvalidTagId);
-
-            // Assert
-            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
-        });
-
-        it("Inserts successfully", async () => {
-            // Arrange
-            await TagModel.create(createTagDTO);
-
-            const app = createApp();
-
-            // Act
-            const response = await request(app)
-                .post(createNewPostEndpoint)
-                .send(createPostDto);
-
-            const postDB = await PostModel.findOne({
-                where: { title: createPostDto.title },
-            });
-
-            // Assert
-            expect(response.status).toBe(HTTP_STATUSES.CREATED);
-            expect(postDB).not.toBeNull();
-        });
-    });
-
-    describe("Find post by id", () => {
-        it("Return 404 if post id does not exist", async () => {
-            // Arrange
-            await TagModel.create(createTagDTO);
-
-            const app = createApp();
-
-            // Act
-            const response = await request(app).get(
-                findPostByIdEndpoint.replace(":id", String(999)),
-            );
-
-            // Assert
-            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
-        });
-
-        it("Returns post successfully", async () => {
-            // Arrange
-            await TagModel.create(createTagDTO);
-
-            const createdPost = await PostModel.create({
-                title: createPostDto.title,
-                description: createPostDto.description,
-                content: createPostDto.content,
-                readingTime: createPostDto.reading_time,
-                status: PostStatus.DRAFT,
-                tagId: 1,
-            });
-
-            const app = createApp();
-
-            // Act
-            const response = await request(app).get(
-                findPostByIdEndpoint.replace(":id", String(createdPost.postId)),
-            );
-
-            // Assert
-            expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
-            expect(response.body.data.post_id).toBe(createdPost.postId);
-        });
-    });
-
     describe("Find all posts", () => {
         it("Should return 200 with empty data when no posts exist", async () => {
             // Arrange
@@ -235,6 +157,192 @@ describe("Posts", () => {
 
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+    });
+
+    describe("Insert new post", () => {
+        it("Return 404 if tag id does not exist", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+            const app = createApp();
+
+            // Act
+            const response = await request(app)
+                .post(createNewPostEndpoint)
+                .send(createPostDtoWithInvalidTagId);
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
+        });
+
+        it("Inserts successfully", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app)
+                .post(createNewPostEndpoint)
+                .send(createPostDto);
+
+            const postDB = await PostModel.findOne({
+                where: { title: createPostDto.title },
+            });
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.CREATED);
+            expect(postDB).not.toBeNull();
+        });
+    });
+
+    describe("Find post by id", () => {
+        it("Return 404 if post id does not exist", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app).get(
+                findPostByIdEndpoint.replace(":id", String(999)),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
+        });
+
+        it("Returns post successfully", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.DRAFT,
+                tagId: 1,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app).get(
+                findPostByIdEndpoint.replace(":id", String(createdPost.postId)),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
+            expect(response.body.data.post_id).toBe(createdPost.postId);
+        });
+    });
+
+    const hidePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.HIDE_BY_ID}`;
+    const deletePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
+
+    describe("Hide post", () => {
+        it("Should return 404 if post does not exist", async () => {
+            // Arrange
+            const app = createApp();
+
+            // Act
+            const response = await request(app).patch(
+                hidePostEndpoint.replace(":id", "999"),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
+        });
+
+        it("Should return 409 if post is already hidden", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+            const post = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.HIDDEN,
+                tagId: 1,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app).patch(
+                hidePostEndpoint.replace(":id", String(post.postId)),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.CONFLICT);
+        });
+
+        it("Should hide a post successfully", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+            const post = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.DRAFT,
+                tagId: 1,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app).patch(
+                hidePostEndpoint.replace(":id", String(post.postId)),
+            );
+
+            const updatedPost = await PostModel.findByPk(post.postId);
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
+            expect(updatedPost?.status).toBe(PostStatus.HIDDEN);
+        });
+    });
+
+    describe("Delete post", () => {
+        it("Should return 404 if post does not exist", async () => {
+            // Arrange
+            const app = createApp();
+
+            // Act
+            const response = await request(app).delete(
+                deletePostEndpoint.replace(":id", "999"),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
+        });
+
+        it("Should delete a post successfully", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+            const post = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.DRAFT,
+                tagId: 1,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app).delete(
+                deletePostEndpoint.replace(":id", String(post.postId)),
+            );
+
+            const deletedPost = await PostModel.findByPk(post.postId);
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.NO_CONTENT);
+            expect(deletedPost).toBeNull();
         });
     });
 });

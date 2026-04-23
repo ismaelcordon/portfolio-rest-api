@@ -7,7 +7,8 @@ export type ApiErrorCode =
     | "FORBIDDEN"
     | "BAD_REQUEST"
     | "INTERNAL_SERVER_ERROR"
-    | "UNKNOWN_ERROR";
+    | "UNKNOWN_ERROR"
+    | "CONFLICT_ERROR";
 
 export interface SuccessResponse<T = null> {
     message: string;

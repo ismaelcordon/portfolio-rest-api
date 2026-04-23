@@ -3,9 +3,11 @@ import { sendError, sendSuccess } from "#helpers/response.helper.js";
 import { CreatePostRequestDto } from "#dtos/CreatePostRequest.dto.js";
 import { CustomException } from "../exceptions/custom.exception";
 import {
+    destroyPost,
     findAllPosts,
     findPostById,
     insertNewPost,
+    updatePostToHidden,
 } from "#services/posts.service.js";
 import { HTTP_STATUSES } from "#utils/constants.utils";
 
@@ -80,6 +82,46 @@ export const getAllPosts = async (req: Request, res: Response) => {
             );
         }
 
+        return sendError(res, "Unexpected error", "UNKNOWN_ERROR");
+    }
+};
+
+export const hidePost = async (req: Request, res: Response) => {
+    try {
+        const postId = parseInt(req.params.id as string);
+        await updatePostToHidden(postId);
+
+        return sendSuccess(res, "Post hidden successfully");
+    } catch (error) {
+        if (error instanceof CustomException) {
+            return sendError(
+                res,
+                error.message,
+                error.code,
+                null,
+                error.statusCode,
+            );
+        }
+        return sendError(res, "Unexpected error", "UNKNOWN_ERROR");
+    }
+};
+
+export const deletePost = async (req: Request, res: Response) => {
+    try {
+        const postId = parseInt(req.params.id as string);
+        await destroyPost(postId);
+
+        return res.status(HTTP_STATUSES.NO_CONTENT).send();
+    } catch (error) {
+        if (error instanceof CustomException) {
+            return sendError(
+                res,
+                error.message,
+                error.code,
+                null,
+                error.statusCode,
+            );
+        }
         return sendError(res, "Unexpected error", "UNKNOWN_ERROR");
     }
 };

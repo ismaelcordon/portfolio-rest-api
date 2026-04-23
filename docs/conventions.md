@@ -109,6 +109,66 @@ See: `docs/responses.md`
 
 ---
 
+## Case Convention
+
+The API follows a clear naming convention between external payloads and internal application code.
+
+### Request body
+
+Clients must send request payloads in **snake_case**.
+
+Example:
+
+```json
+{
+    "reading_time": 5,
+    "tag_id": 3
+}
+```
+
+A middleware transforms incoming request body keys into **camelCase** before the data reaches controllers and services.
+
+Internal example:
+
+```ts
+{
+  readingTime: 5,
+  tagId: 3
+}
+```
+
+### Response body
+
+Application code works internally with **camelCase**, but all API responses are transformed into **snake_case** before being returned to the client.
+
+Example internal object:
+
+```ts
+{
+  postId: 15,
+  readingTime: 5,
+  createdAt: "2026-04-23T06:55:08.376Z"
+}
+```
+
+Returned API response:
+
+```json
+{
+    "post_id": 15,
+    "reading_time": 5,
+    "created_at": "2026-04-23T06:55:08.376Z"
+}
+```
+
+### Purpose
+
+This convention exists to:
+
+- keep JavaScript and TypeScript code idiomatic
+- preserve a consistent API contract for clients
+- avoid mixing `snake_case` and `camelCase` across the codebase
+
 ## Error Handling Conventions
 
 - All errors must use a defined `ApiErrorCode`

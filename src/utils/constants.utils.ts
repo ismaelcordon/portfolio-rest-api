@@ -15,5 +15,9 @@ export const API_ROUTES = {
 
     POSTS: {
         BASE: "/posts",
+        BY_ID: "/:id",
+        PARAMS: {
+            ID: "id",
+        },
     },
 };

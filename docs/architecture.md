@@ -152,6 +152,65 @@ Examples:
 
 ---
 
+## Exception Propagation
+
+The application uses a controlled exception propagation system for expected business and application errors.
+
+Custom exceptions are defined in:
+
+```text
+src/exceptions/
+```
+
+Current exceptions include:
+
+- `CustomException`
+- `NotFoundException`
+- `InternalServerException`
+
+### Base exception
+
+```ts
+export class CustomException extends Error {
+    constructor(
+        message: string,
+        public readonly code: ApiErrorCode,
+        public readonly statusCode: number,
+    ) {
+        super(message);
+        this.name = "CustomException";
+    }
+}
+```
+
+### Purpose
+
+This approach allows services and other layers to throw structured exceptions that contain:
+
+- a human-readable message
+- a stable internal error code
+- the HTTP status code that should be returned
+
+### Flow
+
+A typical controlled error flow is:
+
+```text
+Service throws CustomException
+→ Controller catches exception
+→ Controller calls sendError(...)
+→ API returns standardized error response
+```
+
+### Benefits
+
+- keeps error handling consistent
+- avoids duplicated error mapping logic
+- makes expected failures explicit
+- improves testability
+
+---
+
 ### Config
 
 Location: `src/config/`

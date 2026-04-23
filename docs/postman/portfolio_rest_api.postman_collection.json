@@ -1,0 +1,62 @@
+{
+  "info": {
+    "_postman_id": "28f957aa-e10c-4e3e-ae05-dce1280f835e",
+    "name": "Portfolio Rest API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "10800677"
+  },
+  "item": [
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "Create new Post",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Mi primer post\",\n    \"description\": \"Descripción del post\",\n    \"content\": \"Contenido del post\",\n    \"reading_time\": 5,\n    \"tag_id\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{portfolio_url}}api/posts",
+              "host": [
+                "{{portfolio_url}}api"
+              ],
+              "path": [
+                "posts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Post By Id",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{portfolio_url}}api/posts/8",
+              "host": [
+                "{{portfolio_url}}api"
+              ],
+              "path": [
+                "posts",
+                "8"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

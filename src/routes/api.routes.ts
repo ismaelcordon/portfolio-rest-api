@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { HTTP_STATUSES } from "../utils/constants.utils";
+import { API_ROUTES, HTTP_STATUSES } from "#utils/constants.utils.js";
+import postRoutes from "#routes/posts.routes.js";
 
 const apiRouter = Router();
 
@@ -8,5 +9,7 @@ apiRouter.get("/", (req, res) => {
         "Welcome to Ismael Cordon Portfolio API",
     );
 });
+
+apiRouter.use(API_ROUTES.POSTS.BASE, postRoutes);
 
 export default apiRouter;

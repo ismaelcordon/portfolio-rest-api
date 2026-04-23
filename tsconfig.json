@@ -2,7 +2,6 @@
     // Visit https://aka.ms/tsconfig to read more about this file
     "compilerOptions": {
         // File Layout
-        "rootDir": "./src",
         "outDir": "./dist",
 
         // Environment Settings
@@ -31,12 +30,14 @@
         // "noFallthroughCasesInSwitch": true,
         // "noPropertyAccessFromIndexSignature": true,
         "paths": {
-            "#models/*": ["./src/models/*"],
             "#config/*": ["./src/config/*"],
             "#controllers/*": ["./src/controllers/*"],
-            "#database/*": ["./src/database/*"],
-            "#middlewares/*": ["./src/middlewares/*"],
+            "#dtos/*": ["./src/dtos/*"],
+            "#exceptions/*": ["./src/exceptions/*"],
             "#helpers/*": ["./src/helpers/*"],
+            "#mappers/*": ["./src/mappers/*"],
+            "#middlewares/*": ["./src/middlewares/*"],
+            "#models/*": ["./src/models/*"],
             "#routes/*": ["./src/routes/*"],
             "#services/*": ["./src/services/*"],
             "#types/*": ["./src/types/*"],
@@ -44,6 +45,8 @@
             "#validators/*": ["./src/validators/*"]
         },
         // Recommended Options
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
         "strict": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,

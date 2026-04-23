@@ -7,10 +7,14 @@
         "doc": "docs"
     },
     "scripts": {
-        "dev": "nodemon --watch src --exec ts-node src/server.ts",
+        "dev": "nodemon --watch src --exec tsx src/server.ts",
         "build": "tsc & tsc-alias",
         "start": "node dist/server.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test:watch": "vitest",
+        "test:coverage": "vitest run -c vitest.unit.config.ts --coverage",
+        "test:unit": "vitest run -c vitest.unit.config.ts",
+        "test:integration": "vitest run -c vitest.integration.config.ts",
+        "test": "npm run test:unit && npm run test:integration"
     },
     "repository": {
         "type": "git",
@@ -23,10 +27,13 @@
     },
     "homepage": "https://github.com/ismael-cordon/portfolio-rest-api#readme",
     "imports": {
+        "#config/*": "./dist/config/*",
         "#controllers/*": "./dist/controllers/*",
-        "#database/*": "./dist/database/*",
+        "#dtos/*": "./dist/dtos/*",
+        "#exceptions/*": "./dist/exceptions/*",
         "#helpers/*": "./dist/helpers/*",
         "#middlewares/*": "./dist/middlewares/*",
+        "#models/*": "./dist/models/*",
         "#routes/*": "./dist/routes/*",
         "#services/*": "./dist/services/*",
         "#types/*": "./dist/services/*",
@@ -34,12 +41,16 @@
         "#validators/*": "./dist/validators/*"
     },
     "dependencies": {
+        "camelcase-keys": "^10.0.2",
         "chalk": "^5.6.2",
         "cors": "^2.8.6",
         "dotenv": "^17.4.1",
         "express": "^5.2.1",
+        "express-validator": "^7.3.2",
         "pg": "^8.20.0",
-        "sequelize": "^6.37.8"
+        "reflect-metadata": "^0.2.2",
+        "sequelize": "^6.37.8",
+        "snakecase-keys": "^8.1.0"
     },
     "devDependencies": {
         "@types/chalk": "^0.4.31",
@@ -54,6 +65,6 @@
         "tsc-alias": "^1.8.16",
         "tsx": "^4.21.0",
         "typescript": "^6.0.2",
-        "vitest": "^4.1.3"
+        "vitest": "^4.1.5"
     }
 }

@@ -65,6 +65,103 @@ Creates a new blog post.
 
 ---
 
+### `GET /posts`
+
+Returns a paginated list of posts.
+
+**Authentication:** No
+
+#### Query Parameters
+
+- `page` → page number to retrieve
+    - optional
+    - default value: `1`
+
+- `tag_id` → filters posts by tag id
+    - optional
+
+- `search` → filters posts by title
+    - optional
+
+#### Pagination Rules
+
+- Pagination is fixed at **20 posts per page**
+- Results are ordered by `published_at` in descending order
+
+#### Example Requests
+
+```http
+GET /posts?page=1
+```
+
+```http
+GET /posts?page=1&tag_id=4
+```
+
+```http
+GET /posts?page=1&search=android
+```
+
+```http
+GET /posts?page=1&tag_id=4&search=ios
+```
+
+#### Success Response
+
+**Status:** `200 OK`
+
+```json
+{
+    "message": "Posts successfully retrieved",
+    "data": {
+        "data": [
+            {
+                "post_id": 12,
+                "title": "Mi post numero 8",
+                "description": "Descripción del post",
+                "content": "Contenido del post",
+                "reading_time": 5,
+                "status": "PUBLISHED",
+                "scheduled_at": null,
+                "published_at": "2026-04-23T09:30:00.000Z",
+                "created_at": "2026-04-21T10:18:12.830Z",
+                "updated_at": "2026-04-21T10:18:12.831Z",
+                "tag": {
+                    "tag_id": 4,
+                    "description": "iOS"
+                }
+            }
+        ],
+        "meta": {
+            "total": 1,
+            "page": 1,
+            "total_pages": 1,
+            "has_next_page": false,
+            "has_prev_page": false
+        }
+    }
+}
+```
+
+#### Possible Responses
+
+- `200` → posts returned successfully
+- `400` → `VALIDATION_ERROR`
+- `404` → `NOT_FOUND`
+- `500` → `INTERNAL_SERVER_ERROR`
+
+#### Notes
+
+- If no `page` query parameter is provided, page `1` is used by default
+- The endpoint returns up to **20 posts per page**
+- `tag_id` can be used to filter posts by tag
+- `search` can be used to filter posts by title
+- Results are sorted by publication date in descending order
+- The response includes related tag information for each post
+- Pagination metadata is returned inside `data.meta`
+
+---
+
 ### `GET /posts/:id`
 
 Returns a blog post if it exists.

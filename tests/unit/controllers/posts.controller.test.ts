@@ -1,15 +1,28 @@
-import { createPost, getPostById } from "#controllers/posts.controller.js";
+import {
+    createPost,
+    getAllPosts,
+    getPostById,
+} from "#controllers/posts.controller.js";
 import { NotFoundException } from "#exceptions/not-found.exception.js";
 import { sendError, sendSuccess } from "#helpers/response.helper.js";
-import { findPostById, insertNewPost } from "#services/posts.service.js";
+import {
+    findAllPosts,
+    findPostById,
+    insertNewPost,
+} from "#services/posts.service.js";
 import { HTTP_STATUSES } from "#utils/constants.utils";
 import { Request, Response } from "express";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { mockCreatePostDto, mockPostDto } from "../../fixtures/post.fixtures";
+import {
+    mockCreatePostDto,
+    mockPaginatedPostsDto,
+    mockPostDto,
+} from "../../fixtures/post.fixtures";
 
 vi.mock("#services/posts.service.js", () => ({
     insertNewPost: vi.fn(),
     findPostById: vi.fn(),
+    findAllPosts: vi.fn(),
 }));
 
 vi.mock("#helpers/response.helper.js", () => ({
@@ -146,6 +159,120 @@ describe("post.controller", () => {
 
             // Assert
             expect(findPostById).toHaveBeenCalledWith(1);
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                "Unexpected error",
+                "UNKNOWN_ERROR",
+            );
+        });
+    });
+
+    describe("getAllPosts", () => {
+        it("Should return paginated posts successfully", async () => {
+            // Arrange
+            req.query = { page: "1", tag_id: "2" };
+            vi.mocked(findAllPosts).mockResolvedValue(mockPaginatedPostsDto);
+
+            // Act
+            await getAllPosts(req, res);
+
+            // Assert
+            expect(findAllPosts).toHaveBeenCalledWith(1, 2, undefined);
+            expect(sendSuccess).toHaveBeenCalledWith(
+                res,
+                "Posts successfully retrieved",
+                mockPaginatedPostsDto,
+            );
+            expect(sendError).not.toHaveBeenCalled();
+        });
+
+        it("Should call findAllPosts without tagId when not provided", async () => {
+            // Arrange
+            req.query = { page: "1" };
+            vi.mocked(findAllPosts).mockResolvedValue(mockPaginatedPostsDto);
+
+            // Act
+            await getAllPosts(req, res);
+
+            // Assert
+            expect(findAllPosts).toHaveBeenCalledWith(1, undefined, undefined);
+            expect(sendSuccess).toHaveBeenCalledWith(
+                res,
+                "Posts successfully retrieved",
+                mockPaginatedPostsDto,
+            );
+            expect(sendError).not.toHaveBeenCalled();
+        });
+
+        it("Should call findAllPosts with search query provided", async () => {
+            // Arrange
+            const searchQuery = "Ocult";
+            req.query = { page: "1", search: searchQuery };
+            vi.mocked(findAllPosts).mockResolvedValue(mockPaginatedPostsDto);
+
+            // Act
+            await getAllPosts(req, res);
+
+            // Assert
+            expect(findAllPosts).toHaveBeenCalledWith(
+                1,
+                undefined,
+                searchQuery,
+            );
+            expect(sendSuccess).toHaveBeenCalledWith(
+                res,
+                "Posts successfully retrieved",
+                mockPaginatedPostsDto,
+            );
+            expect(sendError).not.toHaveBeenCalled();
+        });
+
+        it("Should default to page 1 when page is not provided", async () => {
+            // Arrange
+            req.query = {};
+            vi.mocked(findAllPosts).mockResolvedValue(mockPaginatedPostsDto);
+
+            // Act
+            await getAllPosts(req, res);
+
+            // Assert
+            expect(findAllPosts).toHaveBeenCalledWith(1, undefined, undefined);
+        });
+
+        it("Should return not found exception response when tagId does not exist", async () => {
+            // Arrange
+            req.query = { page: "1", tag_id: "999" };
+            const notFoundException = new NotFoundException(
+                "Tag with id 999 not found",
+            );
+            vi.mocked(findAllPosts).mockRejectedValue(notFoundException);
+
+            // Act
+            await getAllPosts(req, res);
+
+            // Assert
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                notFoundException.message,
+                notFoundException.code,
+                null,
+                notFoundException.statusCode,
+            );
+        });
+
+        it("Should return internal server error response when service throws unexpected error", async () => {
+            // Arrange
+            req.query = { page: "1" };
+            vi.mocked(findAllPosts).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            await getAllPosts(req, res);
+
+            // Assert
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,

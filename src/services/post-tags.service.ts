@@ -21,3 +21,16 @@ export const checkPostTagById = async (postTagId: number) => {
         );
     }
 };
+
+export const checkPostTagsByIds = async (tagIds: number[]) => {
+    try {
+        const tags = await TagModel.findAll({
+            where: { tagId: tagIds },
+        });
+        return tags;
+    } catch (error) {
+        throw new InternalServerException(
+            error instanceof Error ? error.message : "Unexpected error",
+        );
+    }
+};

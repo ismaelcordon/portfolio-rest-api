@@ -6,17 +6,20 @@ import {
     createPostDto,
     createPostDtoWithInvalidTagId,
     createTagDTO,
+    currentDatePlus3Hours,
     postModelArray,
 } from "../fixtures/post.fixtures";
 import { PostModel } from "#models/sequelize/post.sequelize.js";
 import { TagModel } from "#models/sequelize/post-tag.sequelize.js";
 import { PostStatus } from "#types/post.types.js";
+import { withApiKey } from "../helpers/with-api-key.helpers";
 
 const createNewPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}`;
 const findPostByIdEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
 const hidePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.HIDE_BY_ID}`;
 const deletePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
 const publishPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.PUBLISH_BY_ID}`;
+const schedulePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.SCHEDULE_BY_ID}`;
 
 describe("Posts", () => {
     describe("Find all posts", () => {
@@ -64,9 +67,9 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .get(createNewPostEndpoint)
-                .set("x-api-key", process.env.API_KEY ?? "test-api-key");
+            const response = await withApiKey(
+                request(app).get(createNewPostEndpoint),
+            );
 
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
@@ -107,9 +110,11 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .get(`${createNewPostEndpoint}?tag_id=${tag1.tagId}`)
-                .set("x-api-key", process.env.API_KEY ?? "test-api-key");
+            const response = await withApiKey(
+                request(app).get(
+                    `${createNewPostEndpoint}?tag_id=${tag1.tagId}`,
+                ),
+            );
 
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
@@ -136,9 +141,9 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .get(`${createNewPostEndpoint}?page=2`)
-                .set("x-api-key", process.env.API_KEY ?? "test-api-key");
+            const response = await withApiKey(
+                request(app).get(`${createNewPostEndpoint}?page=2`),
+            );
 
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
@@ -153,8 +158,8 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app).get(
-                `${createNewPostEndpoint}?page=-1`,
+            const response = await withApiKey(
+                request(app).get(`${createNewPostEndpoint}?page=-1`),
             );
 
             // Assert
@@ -166,8 +171,8 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app).get(
-                `${createNewPostEndpoint}?tag_id=-1`,
+            const response = await withApiKey(
+                request(app).get(`${createNewPostEndpoint}?tag_id=-1`),
             );
 
             // Assert
@@ -182,9 +187,11 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .post(createNewPostEndpoint)
-                .send(createPostDtoWithInvalidTagId);
+            const response = await withApiKey(
+                request(app)
+                    .post(createNewPostEndpoint)
+                    .send(createPostDtoWithInvalidTagId),
+            );
 
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
@@ -197,9 +204,9 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .post(createNewPostEndpoint)
-                .send(createPostDto);
+            const response = await withApiKey(
+                request(app).post(createNewPostEndpoint).send(createPostDto),
+            );
 
             const postDB = await PostModel.findOne({
                 where: { title: createPostDto.title },
@@ -243,14 +250,14 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .get(
+            const response = await withApiKey(
+                request(app).get(
                     findPostByIdEndpoint.replace(
                         ":id",
                         String(createdPost.postId),
                     ),
-                )
-                .set("x-api-key", process.env.API_KEY ?? "test-api-key");
+                ),
+            );
 
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
@@ -325,9 +332,9 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .patch(hidePostEndpoint.replace(":id", "999"))
-                .set("x-api-key", process.env.API_KEY ?? "test-api-key");
+            const response = await withApiKey(
+                request(app).patch(hidePostEndpoint.replace(":id", "999")),
+            );
 
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
@@ -348,9 +355,11 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .patch(hidePostEndpoint.replace(":id", String(post.postId)))
-                .set("x-api-key", process.env.API_KEY ?? "test-api-key");
+            const response = await withApiKey(
+                request(app).patch(
+                    hidePostEndpoint.replace(":id", String(post.postId)),
+                ),
+            );
 
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.CONFLICT);
@@ -371,9 +380,11 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .patch(hidePostEndpoint.replace(":id", String(post.postId)))
-                .set("x-api-key", process.env.API_KEY ?? "test-api-key");
+            const response = await withApiKey(
+                request(app).patch(
+                    hidePostEndpoint.replace(":id", String(post.postId)),
+                ),
+            );
 
             const updatedPost = await PostModel.findByPk(post.postId);
 
@@ -401,9 +412,9 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .delete(deletePostEndpoint.replace(":id", "999"))
-                .set("x-api-key", process.env.API_KEY ?? "test-api-key");
+            const response = await withApiKey(
+                request(app).delete(deletePostEndpoint.replace(":id", "999")),
+            );
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
         });
@@ -423,9 +434,11 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app)
-                .delete(deletePostEndpoint.replace(":id", String(post.postId)))
-                .set("x-api-key", process.env.API_KEY ?? "test-api-key");
+            const response = await withApiKey(
+                request(app).delete(
+                    deletePostEndpoint.replace(":id", String(post.postId)),
+                ),
+            );
 
             const deletedPost = await PostModel.findByPk(post.postId);
 
@@ -436,13 +449,38 @@ describe("Posts", () => {
     });
 
     describe("Publish post", () => {
+        it("Should return 401 when api key is not provided", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.DRAFT,
+                tagId: 1,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app).patch(
+                publishPostEndpoint.replace(":id", String(createdPost.postId)),
+            );
+
+            await PostModel.findByPk(createdPost.postId);
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.UNAUTHORIZED);
+        });
         it("Should return 404 if post does not exist", async () => {
             // Arrange
             const app = createApp();
 
             // Act
-            const response = await request(app).patch(
-                publishPostEndpoint.replace(":id", "999"),
+            const response = await withApiKey(
+                request(app).patch(publishPostEndpoint.replace(":id", "999")),
             );
 
             // Assert
@@ -466,8 +504,13 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app).patch(
-                publishPostEndpoint.replace(":id", String(createdPost.postId)),
+            const response = await withApiKey(
+                request(app).patch(
+                    publishPostEndpoint.replace(
+                        ":id",
+                        String(createdPost.postId),
+                    ),
+                ),
             );
 
             // Assert
@@ -490,8 +533,13 @@ describe("Posts", () => {
             const app = createApp();
 
             // Act
-            const response = await request(app).patch(
-                publishPostEndpoint.replace(":id", String(createdPost.postId)),
+            const response = await withApiKey(
+                request(app).patch(
+                    publishPostEndpoint.replace(
+                        ":id",
+                        String(createdPost.postId),
+                    ),
+                ),
             );
 
             const postDB = await PostModel.findByPk(createdPost.postId);
@@ -500,6 +548,179 @@ describe("Posts", () => {
             expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
             expect(postDB?.status).toBe(PostStatus.PUBLISHED);
             expect(postDB?.publishedAt).not.toBeNull();
+        });
+    });
+
+    describe("Schedule post", () => {
+        it("Should return 400 if api. key is not provided", async () => {
+            // Arrange
+            const app = createApp();
+
+            // Act
+            const response = await request(app)
+                .patch(schedulePostEndpoint.replace(":id", "1"))
+                .send({ scheduled_at: currentDatePlus3Hours });
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.UNAUTHORIZED);
+        });
+        it("Should return 400 when scheduled_at is not provided", async () => {
+            // Arrange
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .patch(schedulePostEndpoint.replace(":id", "1"))
+                    .send({}),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should return 400 when scheduled_at has invalid format", async () => {
+            // Arrange
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .patch(schedulePostEndpoint.replace(":id", "1"))
+                    .send({ scheduled_at: "not-a-date" }),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should return 400 when scheduled_at is in the past", async () => {
+            // Arrange
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .patch(schedulePostEndpoint.replace(":id", "1"))
+                    .send({ scheduled_at: "2024-01-01T10:00:00+02:00" }),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should return 404 when post does not exist", async () => {
+            // Arrange
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .patch(schedulePostEndpoint.replace(":id", "999"))
+                    .set("x-api-key", process.env.API_KEY ?? "test-api-key")
+                    .send({ scheduled_at: currentDatePlus3Hours }),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
+        });
+
+        it("Should return 409 when post is already published", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.PUBLISHED,
+                tagId: 1,
+                publishedAt: new Date(),
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .patch(
+                        schedulePostEndpoint.replace(
+                            ":id",
+                            String(createdPost.postId),
+                        ),
+                    )
+                    .send({ scheduled_at: currentDatePlus3Hours }),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.CONFLICT);
+        });
+
+        it("Should return 409 when post is hidden", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.HIDDEN,
+                tagId: 1,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .patch(
+                        schedulePostEndpoint.replace(
+                            ":id",
+                            String(createdPost.postId),
+                        ),
+                    )
+                    .send({ scheduled_at: currentDatePlus3Hours }),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.CONFLICT);
+        });
+
+        it("Should schedule a post successfully", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.DRAFT,
+                tagId: 1,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .patch(
+                        schedulePostEndpoint.replace(
+                            ":id",
+                            String(createdPost.postId),
+                        ),
+                    )
+                    .send({ scheduled_at: currentDatePlus3Hours }),
+            );
+
+            const postDB = await PostModel.findByPk(createdPost.postId);
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
+            expect(postDB?.status).toBe(PostStatus.SCHEDULED);
+            expect(postDB?.scheduledAt).not.toBeNull();
         });
     });
 });

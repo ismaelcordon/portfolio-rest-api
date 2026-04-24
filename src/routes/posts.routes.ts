@@ -3,8 +3,10 @@ import {
     createPost,
     getAllPosts,
     getPostById,
+    getScheduledPosts,
     hidePost,
     publishPost,
+    schedulePost,
 } from "#controllers/posts.controller.js";
 import { validateBody } from "#middlewares/validate-body.middleware.js";
 import { createPostValidator } from "#validators/create-post-validator.js";
@@ -14,11 +16,13 @@ import { getPostValidator } from "#validators/get-post-validator.js";
 import { getAllPostsValidator } from "#validators/get-all-posts-validator";
 import { deletePost } from "../controllers/posts.controller";
 import { apiKeyMiddleware } from "#middlewares/api-key.middleware.js";
+import { schedulePostValidator } from "#validators/schedule-post.validator";
 
 const router = Router();
 
 router.post(
     "/",
+    apiKeyMiddleware(true),
     createPostValidator,
     validateBody,
     camelCaseMiddleware,
@@ -31,6 +35,21 @@ router.get(
     getPostValidator,
     validateBody,
     getPostById,
+);
+
+router.get(
+    "/",
+    apiKeyMiddleware(),
+    getAllPostsValidator,
+    validateBody,
+    getAllPosts,
+);
+
+router.get(
+    API_ROUTES.POSTS.SCHEDULED_DUE,
+    apiKeyMiddleware(true),
+    validateBody,
+    getScheduledPosts,
 );
 
 router.get(
@@ -55,6 +74,20 @@ router.delete(
     deletePost,
 );
 
-router.patch(API_ROUTES.POSTS.PUBLISH_BY_ID, publishPost);
+router.patch(
+    API_ROUTES.POSTS.PUBLISH_BY_ID,
+    apiKeyMiddleware(true),
+    validateBody,
+    publishPost,
+);
+
+router.patch(
+    API_ROUTES.POSTS.SCHEDULE_BY_ID,
+    apiKeyMiddleware(true),
+    schedulePostValidator,
+    validateBody,
+    camelCaseMiddleware,
+    schedulePost,
+);
 
 export default router;

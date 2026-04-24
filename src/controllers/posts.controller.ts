@@ -6,9 +6,11 @@ import {
     destroyPost,
     findAllPosts,
     findPostById,
+    findScheduledPosts,
     insertNewPost,
     updatePostToHidden,
     updatePostToPublished,
+    updatePostToScheduled,
 } from "#services/posts.service.js";
 import { HTTP_STATUSES } from "#utils/constants.utils";
 
@@ -138,6 +140,50 @@ export const publishPost = async (req: Request, res: Response) => {
         await updatePostToPublished(postId);
 
         return sendSuccess(res, "Post published successfully");
+    } catch (error) {
+        if (error instanceof CustomException) {
+            return sendError(
+                res,
+                error.message,
+                error.code,
+                null,
+                error.statusCode,
+            );
+        }
+        return sendError(res, "Unexpected error", "UNKNOWN_ERROR");
+    }
+};
+
+export const schedulePost = async (req: Request, res: Response) => {
+    try {
+        const postId = parseInt(req.params.id as string);
+
+        await updatePostToScheduled(postId, req.body.scheduledAt);
+
+        return sendSuccess(res, "Post scheduled successfully");
+    } catch (error) {
+        if (error instanceof CustomException) {
+            return sendError(
+                res,
+                error.message,
+                error.code,
+                null,
+                error.statusCode,
+            );
+        }
+        return sendError(res, "Unexpected error", "UNKNOWN_ERROR");
+    }
+};
+
+export const getScheduledPosts = async (req: Request, res: Response) => {
+    try {
+        const postIds = await findScheduledPosts();
+
+        return sendSuccess(
+            res,
+            "Scheduled posts retrieved successfully",
+            postIds,
+        );
     } catch (error) {
         if (error instanceof CustomException) {
             return sendError(

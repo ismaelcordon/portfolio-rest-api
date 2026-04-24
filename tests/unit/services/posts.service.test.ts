@@ -11,6 +11,7 @@ import {
     insertNewPost,
     updatePostToHidden,
     updatePostToPublished,
+    updatePostToScheduled,
 } from "#services/posts.service.js";
 import {
     toPaginatedPostsResponseDto,
@@ -28,6 +29,7 @@ import {
     mockPublishedPost,
     mockPublishedPostDto,
     publishedMockPost,
+    mockScheduledPost,
 } from "../../fixtures/post.fixtures.js";
 import { mockTag } from "../../fixtures/post-tags.fixtures.js";
 import { Op } from "sequelize";
@@ -593,6 +595,124 @@ describe("post.service", () => {
 
             // Act
             const result = updatePostToPublished(1);
+
+            // Assert
+            await expect(result).rejects.toThrow(InternalServerException);
+            await expect(result).rejects.toThrow("Database crashed");
+        });
+    });
+
+    describe("schedulePost", () => {
+        it("Should schedule a post successfully from DRAFT", async () => {
+            // Arrange
+            const mockPostWithUpdate = {
+                ...mockPost,
+                update: vi.fn().mockResolvedValue(undefined),
+            };
+            vi.mocked(PostModel.findByPk).mockResolvedValue(
+                mockPostWithUpdate as any,
+            );
+
+            // Act
+            await updatePostToScheduled(
+                mockPost.postId,
+                "2026-05-01T12:00:00+02:00",
+            );
+
+            // Assert
+            expect(PostModel.findByPk).toHaveBeenCalledWith(mockPost.postId);
+            expect(mockPostWithUpdate.update).toHaveBeenCalledWith({
+                status: PostStatus.SCHEDULED,
+                scheduledAt: new Date("2026-05-01T12:00:00+02:00"),
+            });
+        });
+
+        it("Should reschedule a post successfully from SCHEDULED", async () => {
+            // Arrange
+            const mockPostWithUpdate = {
+                ...mockScheduledPost,
+                update: vi.fn().mockResolvedValue(undefined),
+            };
+            vi.mocked(PostModel.findByPk).mockResolvedValue(
+                mockPostWithUpdate as any,
+            );
+
+            // Act
+            await updatePostToScheduled(
+                mockScheduledPost.postId,
+                "2026-06-01T12:00:00+02:00",
+            );
+
+            // Assert
+            expect(PostModel.findByPk).toHaveBeenCalledWith(
+                mockScheduledPost.postId,
+            );
+            expect(mockPostWithUpdate.update).toHaveBeenCalledWith({
+                status: PostStatus.SCHEDULED,
+                scheduledAt: new Date("2026-06-01T12:00:00+02:00"),
+            });
+        });
+
+        it("Should throw NotFoundException when post does not exist", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(null);
+
+            // Act
+            const result = updatePostToScheduled(
+                999,
+                "2026-05-01T12:00:00+02:00",
+            );
+
+            // Assert
+            await expect(result).rejects.toThrow(NotFoundException);
+            await expect(result).rejects.toThrow("Post with id 999 not found");
+        });
+
+        it("Should throw ConflictException when post is already published", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(mockPublishedPost);
+
+            // Act
+            const result = updatePostToScheduled(
+                mockPublishedPost.postId,
+                "2026-05-01T12:00:00+02:00",
+            );
+
+            // Assert
+            await expect(result).rejects.toThrow(ConflictException);
+            await expect(result).rejects.toThrow(
+                `Post with id ${mockPublishedPost.postId} cannot be scheduled`,
+            );
+        });
+
+        it("Should throw ConflictException when post is hidden", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(mockHiddenPost);
+
+            // Act
+            const result = updatePostToScheduled(
+                mockHiddenPost.postId,
+                "2026-05-01T12:00:00+02:00",
+            );
+
+            // Assert
+            await expect(result).rejects.toThrow(ConflictException);
+            await expect(result).rejects.toThrow(
+                `Post with id ${mockHiddenPost.postId} cannot be scheduled`,
+            );
+        });
+
+        it("Should throw InternalServerException when an unexpected error occurs", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            const result = updatePostToScheduled(
+                1,
+                "2026-05-01T12:00:00+02:00",
+            );
 
             // Assert
             await expect(result).rejects.toThrow(InternalServerException);

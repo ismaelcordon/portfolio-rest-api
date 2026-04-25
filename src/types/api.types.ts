@@ -21,3 +21,5 @@ export interface ErrorResponse<T = null> {
     code: ApiErrorCode;
     data: T | null;
 }
+
+export type Lang = "es" | "en";

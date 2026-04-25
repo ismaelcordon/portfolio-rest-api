@@ -11,7 +11,6 @@ import {
 import { PostModel } from "#models/sequelize/post.sequelize.js";
 import { TagModel } from "#models/sequelize/post-tag.sequelize.js";
 import { PostStatus } from "#types/post.types.js";
-import { hidePost } from "../../src/controllers/posts.controller";
 
 const createNewPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}`;
 const findPostByIdEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;

@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PostModel } from "#models/sequelize/post.sequelize.js";
 import {
-    checkPostTagById,
-    checkPostTagsByIds,
-} from "#services/post-tags.service.js";
-import {
     destroyPost,
     findAllPosts,
     findPostById,
@@ -30,11 +26,18 @@ import {
     mockPublishedPostDto,
     publishedMockPost,
     mockScheduledPost,
+    emptyPostDto,
+    emptyMockPost,
 } from "../../fixtures/post.fixtures.js";
 import { mockTag } from "../../fixtures/post-tags.fixtures.js";
 import { Op } from "sequelize";
 import { ConflictException } from "#exceptions/conflict.exception.js";
 import { PostStatus } from "#types/post.types.js";
+import {
+    checkPostTagById,
+    checkPostTagsByIds,
+    findFirstTag,
+} from "#services/post-tags.service.js";
 
 vi.mock("#models/sequelize/post.sequelize.js", () => {
     return {
@@ -58,6 +61,7 @@ vi.mock("#services/post-tags.service.js", () => {
     return {
         checkPostTagById: vi.fn(),
         checkPostTagsByIds: vi.fn(),
+        findFirstTag: vi.fn(),
     };
 });
 
@@ -363,48 +367,28 @@ describe("post.service", () => {
     describe("insertNewPost", () => {
         it("Should create and return a new post", async () => {
             // Arrange
-            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
-            vi.mocked(PostModel.create).mockResolvedValue(mockPost);
-            vi.mocked(toPostResponseDto).mockReturnValue(mockPostDto);
+            vi.mocked(findFirstTag).mockResolvedValue(mockTag);
+            vi.mocked(PostModel.create).mockResolvedValue(emptyMockPost);
+            vi.mocked(toPostResponseDto).mockReturnValue(emptyPostDto);
 
             // Act
-            const result = await insertNewPost(mockCreatePostDto);
+            const result = await insertNewPost();
 
             // Assert
-            expect(checkPostTagById).toHaveBeenCalledWith(
-                mockCreatePostDto.tagId,
-            );
+            expect(findFirstTag).toHaveBeenCalledOnce();
             expect(PostModel.create).toHaveBeenCalledWith({
-                title: mockCreatePostDto.title,
-                description: mockCreatePostDto.description,
-                content: mockCreatePostDto.content,
-                readingTime: mockCreatePostDto.readingTime,
-                status: mockCreatePostDto.status,
-                tagId: mockCreatePostDto.tagId,
+                title: emptyPostDto.title,
+                description: emptyPostDto.description,
+                content: emptyPostDto.content,
+                readingTime: emptyPostDto.readingTime,
+                status: emptyPostDto.status,
+                tagId: emptyPostDto.tag.tagId,
             });
-            expect(toPostResponseDto).toHaveBeenCalledWith(mockPost, mockTag);
-            expect(result).toEqual(mockPostDto);
-        });
-
-        it("Should throw NotFoundException when post does not exist", async () => {
-            // Arrange
-            vi.mocked(checkPostTagById).mockRejectedValue(
-                new NotFoundException(
-                    `Post tag with id: ${mockCreatePostDto.tagId}, not found.`,
-                ),
+            expect(toPostResponseDto).toHaveBeenCalledWith(
+                emptyMockPost,
+                mockTag,
             );
-
-            const result = insertNewPost(mockCreatePostDto);
-
-            // Act
-            await expect(result).rejects.toThrow(NotFoundException);
-            await expect(result).rejects.toThrow(
-                `Post tag with id: ${mockCreatePostDto.tagId}, not found.`,
-            );
-
-            // Assert
-            expect(PostModel.create).not.toHaveBeenCalled();
-            expect(toPostResponseDto).not.toHaveBeenCalled();
+            expect(result).toEqual(emptyPostDto);
         });
 
         it("Should throw InternalServerException when an enexpected error occurs", async () => {
@@ -415,7 +399,7 @@ describe("post.service", () => {
             );
 
             // Act
-            const result = insertNewPost(mockCreatePostDto);
+            const result = insertNewPost();
 
             // Assert
             await expect(result).rejects.toThrow(InternalServerException);
@@ -430,6 +414,7 @@ describe("post.service", () => {
             const mockPostWithUpdate = {
                 ...mockPost,
                 update: vi.fn().mockResolvedValue(undefined),
+                status: PostStatus.PUBLISHED,
             };
             vi.mocked(PostModel.findByPk).mockResolvedValue(
                 mockPostWithUpdate as any,
@@ -437,10 +422,12 @@ describe("post.service", () => {
             vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
 
             // Act
-            await updatePostToHidden(mockPost.postId);
+            await updatePostToHidden(mockPostWithUpdate.postId);
 
             // Assert
-            expect(PostModel.findByPk).toHaveBeenCalledWith(mockPost.postId);
+            expect(PostModel.findByPk).toHaveBeenCalledWith(
+                mockPostWithUpdate.postId,
+            );
             expect(mockPostWithUpdate.update).toHaveBeenCalledWith({
                 status: PostStatus.HIDDEN,
             });
@@ -460,17 +447,17 @@ describe("post.service", () => {
             expect(toPostResponseDto).not.toHaveBeenCalled();
         });
 
-        it("Should throw ConflictException when post is already hidden", async () => {
+        it("Should throw ConflictException when post is not published or hidden", async () => {
             // Arrange
-            vi.mocked(PostModel.findByPk).mockResolvedValue(mockHiddenPost);
+            vi.mocked(PostModel.findByPk).mockResolvedValue(mockScheduledPost);
 
             // Act
-            const result = updatePostToHidden(mockHiddenPost.postId);
+            const result = updatePostToHidden(mockScheduledPost.postId);
 
             // Assert
             await expect(result).rejects.toThrow(ConflictException);
             await expect(result).rejects.toThrow(
-                `Post with id ${mockHiddenPost.postId} is already hidden`,
+                `Post with id ${mockScheduledPost.postId} cannot be hidden, need to be published `,
             );
             expect(checkPostTagById).not.toHaveBeenCalled();
             expect(toPostResponseDto).not.toHaveBeenCalled();

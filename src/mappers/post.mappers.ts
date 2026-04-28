@@ -6,22 +6,24 @@ import { POSTS_PER_PAGE } from "#utils/constants.utils";
 
 export const toPostResponseDto = (
     post: PostModel,
-    tag: TagModel,
+    tag: TagModel | null | undefined,
 ): CreatePostResponseDto => ({
     postId: post.postId,
-    title: post.title,
-    description: post.description,
-    content: post.content,
+    title: post.title ?? null,
+    description: post.description ?? null,
+    content: post.content ?? null,
     readingTime: post.readingTime,
     status: post.status,
     scheduledAt: post.scheduledAt ?? null,
     publishedAt: post.publishedAt ?? null,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
-    tag: {
-        tagId: tag.tagId,
-        description: tag.description,
-    },
+    tag: tag
+        ? {
+              tagId: tag.tagId,
+              description: tag.description,
+          }
+        : null,
 });
 
 export const toPaginatedPostsResponseDto = (

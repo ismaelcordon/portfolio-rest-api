@@ -23,7 +23,6 @@ const router = Router();
 router.post(
     "/",
     apiKeyMiddleware(true),
-    createPostValidator,
     validateBody,
     camelCaseMiddleware,
     createPost,

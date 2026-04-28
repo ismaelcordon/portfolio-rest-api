@@ -22,11 +22,13 @@ import { HTTP_STATUSES } from "#utils/constants.utils.js";
 import { Request, Response } from "express";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+    emptyPostDto,
     mockCreatePostDto,
     mockPaginatedPostsDto,
     mockPostDto,
 } from "../../fixtures/post.fixtures";
 import { ConflictException } from "#exceptions/conflict.exception.js";
+import { emptyMockPost } from "../../fixtures/post.fixtures";
 
 vi.mock("#services/posts.service.js", () => ({
     insertNewPost: vi.fn(),
@@ -208,17 +210,17 @@ describe("post.controller", () => {
     describe("createPost", () => {
         it("Should create a new post and return success response", async () => {
             // Arrange
-            vi.mocked(insertNewPost).mockResolvedValue(mockPostDto);
+            vi.mocked(insertNewPost).mockResolvedValue(emptyPostDto);
 
             // Act
             await createPost(req, res);
 
             // Assert
-            expect(insertNewPost).toHaveBeenCalledWith(mockCreatePostDto);
+            expect(insertNewPost).toHaveBeenCalledOnce();
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
                 "Post created successfully",
-                mockPostDto,
+                emptyPostDto,
                 HTTP_STATUSES.CREATED,
             );
             expect(sendError).not.toHaveBeenCalled();
@@ -227,7 +229,7 @@ describe("post.controller", () => {
         it("Should return controlled error response when service throws CustomException", async () => {
             // Arrange
             const notFoundException = new NotFoundException(
-                `Post tag with id ${mockCreatePostDto.tagId} not found`,
+                `Post tag with id ${emptyPostDto.tag.tagId} not found`,
             );
             vi.mocked(insertNewPost).mockRejectedValue(notFoundException);
 
@@ -235,7 +237,7 @@ describe("post.controller", () => {
             await createPost(req, res);
 
             // Assert
-            expect(insertNewPost).toHaveBeenCalledWith(mockCreatePostDto);
+            expect(insertNewPost).toHaveBeenCalled();
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,
@@ -256,7 +258,7 @@ describe("post.controller", () => {
             await createPost(req, res);
 
             // Assert
-            expect(insertNewPost).toHaveBeenCalledWith(mockCreatePostDto);
+            expect(insertNewPost).toHaveBeenCalledOnce();
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,

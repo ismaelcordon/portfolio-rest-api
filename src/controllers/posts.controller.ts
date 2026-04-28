@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { sendError, sendSuccess } from "#helpers/response.helper.js";
-import { CreatePostRequestDto } from "#dtos/CreatePostRequest.dto.js";
 import { CustomException } from "../exceptions/custom.exception";
 import {
     destroyPost,
@@ -16,9 +15,7 @@ import { HTTP_STATUSES } from "#utils/constants.utils";
 
 export const createPost = async (req: Request, res: Response) => {
     try {
-        const dto = req.body as CreatePostRequestDto;
-
-        const newPost = await insertNewPost(dto);
+        const newPost = await insertNewPost();
 
         sendSuccess(
             res,

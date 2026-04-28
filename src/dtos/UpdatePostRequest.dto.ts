@@ -1,4 +1,4 @@
-export class CreatePostRequestDto {
+export class UpdatePostRequestDto {
     title!: string;
     description!: string;
     content!: string;

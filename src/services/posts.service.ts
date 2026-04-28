@@ -15,6 +15,7 @@ import {
 } from "./post-tags.service";
 import { ConflictException } from "#exceptions/conflict.exception";
 import { handleServiceError } from "#helpers/error.helper.js";
+import { UpdatePostRequestDto } from "#dtos/UpdatePostRequest.dto.js";
 
 export const findAllPosts = async (
     page: number,
@@ -215,6 +216,37 @@ export const findScheduledPosts = async (): Promise<number[]> => {
         });
 
         return posts.map((post) => post.postId);
+    } catch (error) {
+        return handleServiceError(error);
+    }
+};
+
+export const updatePostEditableFields = async (
+    postId: number,
+    updatePostRequestDto: UpdatePostRequestDto,
+) => {
+    try {
+        const post = await PostModel.findByPk(postId);
+
+        if (!post) {
+            throw new NotFoundException(`Post with id ${postId} not found`);
+        }
+
+        if (post.status === PostStatus.PUBLISHED) {
+            throw new ConflictException(
+                `Post with id ${postId} cannot be updated because it is already published`,
+            );
+        }
+
+        await checkPostTagById(updatePostRequestDto.tagId);
+
+        await post.update({
+            title: updatePostRequestDto.title,
+            description: updatePostRequestDto.description,
+            content: updatePostRequestDto.content,
+            readingTime: updatePostRequestDto.readingTime,
+            tagId: updatePostRequestDto.tagId,
+        });
     } catch (error) {
         return handleServiceError(error);
     }

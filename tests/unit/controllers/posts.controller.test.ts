@@ -3,7 +3,7 @@ import {
     deletePost,
     getAllPosts,
     getPostById,
-    hidePost,
+    changePostVisibility,
     publishPost,
     schedulePost,
     updatePost,
@@ -16,7 +16,7 @@ import {
     findPostById,
     insertNewPost,
     updatePostEditableFields,
-    updatePostToHidden,
+    updatePostVisibility,
     updatePostToPublished,
     updatePostToScheduled,
 } from "#services/posts.service.js";
@@ -28,16 +28,20 @@ import {
     mockCreatePostDto,
     mockPaginatedPostsDto,
     mockPostDto,
+    mockPublishedPost,
+    mockScheduledPost,
+    mockScheduledPostDto,
     updatePostDto,
 } from "../../fixtures/post.fixtures";
 import { ConflictException } from "#exceptions/conflict.exception.js";
 import { emptyMockPost } from "../../fixtures/post.fixtures";
+import { PostStatus } from "#types/post.types";
 
 vi.mock("#services/posts.service.js", () => ({
     insertNewPost: vi.fn(),
     findPostById: vi.fn(),
     findAllPosts: vi.fn(),
-    updatePostToHidden: vi.fn(),
+    updatePostVisibility: vi.fn(),
     destroyPost: vi.fn(),
     updatePostToPublished: vi.fn(),
     updatePostToScheduled: vi.fn(),
@@ -361,30 +365,34 @@ describe("post.controller", () => {
         it("Should hide a post successfully", async () => {
             // Arrange
             req.params = { id: "1" };
-            vi.mocked(updatePostToHidden).mockResolvedValue();
+            vi.mocked(updatePostVisibility).mockResolvedValue(
+                mockPublishedPost,
+            );
 
             // Act
-            await hidePost(req, res);
+            await changePostVisibility(req, res);
 
             // Assert
-            expect(updatePostToHidden).toHaveBeenCalledWith(1);
+            expect(updatePostVisibility).toHaveBeenCalledWith(1);
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
-                "Post hidden successfully",
+                "Post visibility successfully changed",
             );
             expect(sendError).not.toHaveBeenCalled();
         });
 
-        it("Should return controlled error response when service throws CustomException", async () => {
+        it("Should return Conflict Extension when post has scheduled or draft status", async () => {
             // Arrange
             req.params = { id: "1" };
             const conflictException = new ConflictException(
-                "Post with id 1 is already hidden",
+                "Post with id 1 cannot be hidden. Post needs to be published",
             );
-            vi.mocked(updatePostToHidden).mockRejectedValue(conflictException);
+            vi.mocked(updatePostVisibility).mockRejectedValue(
+                conflictException,
+            );
 
             // Act
-            await hidePost(req, res);
+            await changePostVisibility(req, res);
 
             // Assert
             expect(sendSuccess).not.toHaveBeenCalled();
@@ -400,12 +408,12 @@ describe("post.controller", () => {
         it("Should return internal server error response when service throws unexpected error", async () => {
             // Arrange
             req.params = { id: "1" };
-            vi.mocked(updatePostToHidden).mockRejectedValue(
+            vi.mocked(updatePostVisibility).mockRejectedValue(
                 new Error("Database crashed"),
             );
 
             // Act
-            await hidePost(req, res);
+            await changePostVisibility(req, res);
 
             // Assert
             expect(sendSuccess).not.toHaveBeenCalled();
@@ -423,7 +431,6 @@ describe("post.controller", () => {
             req.params = { id: "1" };
             const statusMock = { send: vi.fn() };
             (res as any).status = vi.fn().mockReturnValue(statusMock);
-            vi.mocked(destroyPost).mockResolvedValue();
 
             // Act
             await deletePost(req, res);

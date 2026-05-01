@@ -17,7 +17,7 @@ import { emptyPostDto } from "../fixtures/post.fixtures";
 
 const createNewPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}`;
 const findPostByIdEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
-const hidePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.HIDE_BY_ID}`;
+const changeVisibilityEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.CHANGE_VISIBILITY_BY_ID}`;
 const deletePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
 const publishPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.PUBLISH_BY_ID}`;
 const schedulePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.SCHEDULE_BY_ID}`;
@@ -300,15 +300,26 @@ describe("Posts", () => {
         });
     });
 
-    describe("Hide post", () => {
+    describe("Change post visibility", () => {
         it("Should return 401 if api key is not provided", async () => {
             // Arrange
+            await TagModel.create(createTagDTO);
+            const post = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.PUBLISHED,
+                tagId: 1,
+            });
+
             const app = createApp();
 
             // Act
             const response = await request(app).patch(
-                hidePostEndpoint.replace(":id", "999"),
+                changeVisibilityEndpoint.replace(":id", String(post.postId)),
             );
+
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.UNAUTHORIZED);
         });
@@ -319,7 +330,9 @@ describe("Posts", () => {
 
             // Act
             const response = await withApiKey(
-                request(app).patch(hidePostEndpoint.replace(":id", "999")),
+                request(app).patch(
+                    changeVisibilityEndpoint.replace(":id", "999"),
+                ),
             );
 
             // Assert
@@ -343,7 +356,10 @@ describe("Posts", () => {
             // Act
             const response = await withApiKey(
                 request(app).patch(
-                    hidePostEndpoint.replace(":id", String(post.postId)),
+                    changeVisibilityEndpoint.replace(
+                        ":id",
+                        String(post.postId),
+                    ),
                 ),
             );
 
@@ -351,7 +367,35 @@ describe("Posts", () => {
             expect(response.status).toBe(HTTP_STATUSES.CONFLICT);
         });
 
-        it("Should hide a post successfully", async () => {
+        it("Should return 409 if post has scheduled status", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+            const post = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.SCHEDULED,
+                tagId: 1,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app).patch(
+                    changeVisibilityEndpoint.replace(
+                        ":id",
+                        String(post.postId),
+                    ),
+                ),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.CONFLICT);
+        });
+
+        it("Should change post visibility successfully", async () => {
             // Arrange
             await TagModel.create(createTagDTO);
             const post = await PostModel.create({
@@ -368,7 +412,10 @@ describe("Posts", () => {
             // Act
             const response = await withApiKey(
                 request(app).patch(
-                    hidePostEndpoint.replace(":id", String(post.postId)),
+                    changeVisibilityEndpoint.replace(
+                        ":id",
+                        String(post.postId),
+                    ),
                 ),
             );
 

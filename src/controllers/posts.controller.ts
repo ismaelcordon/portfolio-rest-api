@@ -7,7 +7,7 @@ import {
     findPostById,
     findScheduledPosts,
     insertNewPost,
-    updatePostToHidden,
+    updatePostVisibility,
     updatePostToPublished,
     updatePostToScheduled,
 } from "#services/posts.service.js";
@@ -93,12 +93,12 @@ export const getAllPosts = async (req: Request, res: Response) => {
     }
 };
 
-export const hidePost = async (req: Request, res: Response) => {
+export const changePostVisibility = async (req: Request, res: Response) => {
     try {
         const postId = parseInt(req.params.id as string);
-        await updatePostToHidden(postId);
+        await updatePostVisibility(postId);
 
-        return sendSuccess(res, "Post hidden successfully");
+        return sendSuccess(res, "Post visibility successfully changed");
     } catch (error) {
         if (error instanceof CustomException) {
             return sendError(

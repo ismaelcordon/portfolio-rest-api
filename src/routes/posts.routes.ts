@@ -4,7 +4,7 @@ import {
     getAllPosts,
     getPostById,
     getScheduledPosts,
-    hidePost,
+    changePostVisibility,
     publishPost,
     schedulePost,
     updatePost,
@@ -61,10 +61,10 @@ router.get(
 );
 
 router.patch(
-    API_ROUTES.POSTS.HIDE_BY_ID,
+    API_ROUTES.POSTS.CHANGE_VISIBILITY_BY_ID,
     apiKeyMiddleware(true),
     validateBody,
-    hidePost,
+    changePostVisibility,
 );
 
 router.delete(

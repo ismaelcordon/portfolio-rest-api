@@ -8,7 +8,7 @@
     },
     "scripts": {
         "dev": "nodemon --watch src --exec tsx src/server.ts",
-        "build": "tsc & tsc-alias",
+        "build": "tsc && tsc-alias",
         "start": "node dist/server.js",
         "test:watch": "vitest",
         "test:coverage": "vitest run -c vitest.unit.config.ts --coverage",
@@ -32,11 +32,12 @@
         "#dtos/*": "./dist/dtos/*",
         "#exceptions/*": "./dist/exceptions/*",
         "#helpers/*": "./dist/helpers/*",
+        "#mappers/*": "./dist/mappers/*",
         "#middlewares/*": "./dist/middlewares/*",
         "#models/*": "./dist/models/*",
         "#routes/*": "./dist/routes/*",
         "#services/*": "./dist/services/*",
-        "#types/*": "./dist/services/*",
+        "#types/*": "./dist/types/*",
         "#utils/*": "./dist/utils/*",
         "#validators/*": "./dist/validators/*"
     },
@@ -54,6 +55,7 @@
     },
     "devDependencies": {
         "@types/chalk": "^0.4.31",
+        "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
         "@types/node": "^25.5.2",
         "@types/supertest": "^7.2.0",

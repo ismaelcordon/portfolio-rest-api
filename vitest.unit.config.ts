@@ -12,6 +12,12 @@ export default defineConfig({
             provider: "v8",
             reporter: ["text", "html", "lcov"],
             reportsDirectory: "coverage/unit",
+            thresholds: {
+                lines: 80,
+                functions: 80,
+                branches: 80,
+                statements: 80,
+            },
             exclude: ["node_modules/", "tests/", "**/*.config.ts", "dist/"],
         },
     },

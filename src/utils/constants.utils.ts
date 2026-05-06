@@ -12,7 +12,7 @@ export const HTTP_STATUSES = {
 };
 
 export const API_ROUTES = {
-    BASE: "/api",
+    BASE: "/dev/api",
 
     POSTS: {
         BASE: "/posts",

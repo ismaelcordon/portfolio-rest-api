@@ -109,20 +109,20 @@ jobs:
 
                   # Definimos el emoji y texto de estado
                   if [ "$JOB_STATUS" = "success" ]; then
-                    STATUS_TEXT="✅ *DESPLIEGUE EXITOSO*"
+                    STATUS_TEXT="✅ <b>DESPLIEGUE EXITOSO</b>"
                   else
-                    STATUS_TEXT="❌ *ERROR EN EL DESPLIEGUE*"
+                    STATUS_TEXT="❌ <b>ERROR EN EL DESPLIEGUE</b>"
                   fi
 
                   # Construimos el mensaje usando Markdown
                   MESSAGE=$(cat <<EOF
                   $STATUS_TEXT
 
-                  📦 *Proyecto:* $REPOSITORY
-                  🚀 *Entorno:* Develop
-                  🌿 *Rama origen:* $SOURCE_BRANCH
-                  📝 *PR:* $PR_TITLE
-                  👤 *Autor:* $AUTHOR
+                  📦 <b>Proyecto:</b> $REPOSITORY
+                  🚀 <b>Entorno:</b> Develop
+                  🌿 <b>Rama origen:</b> $SOURCE_BRANCH
+                  📝 <b>PR:</b> $PR_TITLE
+                  👤 <b>Autor:</b> $AUTHOR
                   EOF
                   )
 
@@ -130,4 +130,4 @@ jobs:
                   curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
                     -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
                     -d text="$MESSAGE" \
-                    -d parse_mode="Markdown"
+                    -d parse_mode="HTML"

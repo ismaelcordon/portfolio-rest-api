@@ -17,6 +17,7 @@ export const findAllPosts = async (
     page: number,
     tagId?: number,
     searchQuery?: string,
+    isAdmin: boolean = false,
 ) => {
     try {
         if (tagId) {
@@ -32,6 +33,7 @@ export const findAllPosts = async (
 
         if (tagId) where.tagId = tagId;
         if (searchQuery) where.title = { [Op.iLike]: `%${searchQuery}%` };
+        if (!isAdmin) where.status = PostStatus.PUBLISHED;
 
         const { count, rows } = await PostModel.findAndCountAll({
             limit: POSTS_PER_PAGE,
@@ -57,12 +59,16 @@ export const findAllPosts = async (
     }
 };
 
-export const findPostById = async (postId: number) => {
+export const findPostById = async (postId: number, isAdmin: boolean) => {
     try {
         const post = await PostModel.findByPk(postId);
 
         if (!post) {
             throw new NotFoundException(`Post with id ${postId} not found`);
+        }
+
+        if (!isAdmin && post.status !== PostStatus.PUBLISHED) {
+            throw new NotFoundException(`Post wih id ${postId} not found`);
         }
 
         const tag = await checkPostTagById(post.tagId);

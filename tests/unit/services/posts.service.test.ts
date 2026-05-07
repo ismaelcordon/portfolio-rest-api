@@ -1,21 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { PostModel } from "#models/sequelize/post.sequelize";
+import { PostModel } from "#models/sequelize/post.sequelize.js";
 import {
     checkPostTagById,
     checkPostTagsByIds,
 } from "#services/post-tags.service.js";
 import {
     destroyPost,
-    findAllPosts,
-    findPostById,
     insertNewPost,
     updatePostToHidden,
-} from "#services/posts.service.js";
+    findPostById,
+    findAllPosts,
+} from "../../../src/services/posts.service";
 import {
     toPaginatedPostsResponseDto,
     toPostResponseDto,
 } from "#mappers/post.mappers.js";
-import { NotFoundException } from "#exceptions/not-found.exception";
+import { NotFoundException } from "#exceptions/not-found.exception.js";
 import { InternalServerException } from "#exceptions/internal-server.exception.js";
 import {
     mockCreatePostDto,
@@ -24,10 +24,11 @@ import {
     mockPost,
     mockPostDto,
     mockPostList,
+    mockPublishedPostDto,
+    publishedMockPost,
 } from "../../fixtures/post.fixtures.js";
 import { mockTag } from "../../fixtures/post-tags.fixtures.js";
-import { Op, where } from "sequelize";
-import { deletePost } from "#controllers/posts.controller.js";
+import { Op } from "sequelize";
 import { ConflictException } from "#exceptions/conflict.exception.js";
 import { PostStatus } from "#types/post.types.js";
 
@@ -69,7 +70,7 @@ describe("post.service", () => {
     });
 
     describe("findAllPosts", () => {
-        it("Should return paginated posts without tagId filter", async () => {
+        it("Should return paginated posts without tagId filter and user is not an admin", async () => {
             // Arrange
             vi.mocked(PostModel.findAndCountAll).mockResolvedValue({
                 count: 40,
@@ -82,7 +83,42 @@ describe("post.service", () => {
             );
 
             // Act
-            const result = await findAllPosts(1, undefined, undefined);
+            const result = await findAllPosts(1, undefined, undefined, false);
+
+            // Assert
+            expect(checkPostTagById).not.toHaveBeenCalled();
+            expect(PostModel.findAndCountAll).toHaveBeenCalledWith({
+                limit: 20,
+                offset: 0,
+                where: {
+                    status: PostStatus.PUBLISHED,
+                },
+                order: [["publishedAt", "DESC"]],
+            });
+            expect(checkPostTagsByIds).toHaveBeenCalledWith([1, 2]);
+            expect(toPostResponseDto).toHaveBeenCalledTimes(20);
+            expect(toPaginatedPostsResponseDto).toHaveBeenCalledWith(
+                Array(20).fill(mockPostDto),
+                40,
+                1,
+            );
+            expect(result).toEqual(mockPaginatedPostsDto);
+        });
+
+        it("Should return paginated posts without tagId filter and user is admin", async () => {
+            // Arrange
+            vi.mocked(PostModel.findAndCountAll).mockResolvedValue({
+                count: 40,
+                rows: mockPostList,
+            } as any);
+            vi.mocked(checkPostTagsByIds).mockResolvedValue([mockTag]);
+            vi.mocked(toPostResponseDto).mockReturnValue(mockPostDto);
+            vi.mocked(toPaginatedPostsResponseDto).mockReturnValue(
+                mockPaginatedPostsDto,
+            );
+
+            // Act
+            const result = await findAllPosts(1, undefined, undefined, true);
 
             // Assert
             expect(checkPostTagById).not.toHaveBeenCalled();
@@ -102,7 +138,7 @@ describe("post.service", () => {
             expect(result).toEqual(mockPaginatedPostsDto);
         });
 
-        it("Should calculate offset correctly for page 2 without tagId filter", async () => {
+        it("Should calculate offset correctly for page 2 without tagId filter and user is admin", async () => {
             // Arrange
             vi.mocked(PostModel.findAndCountAll).mockResolvedValue({
                 count: 40,
@@ -115,7 +151,7 @@ describe("post.service", () => {
             );
 
             // Act
-            await findAllPosts(2, undefined, undefined);
+            await findAllPosts(2, undefined, undefined, true);
 
             // Assert
             expect(checkPostTagById).not.toHaveBeenCalled();
@@ -127,7 +163,7 @@ describe("post.service", () => {
             });
         });
 
-        it("Should return paginated posts filtered by tagId", async () => {
+        it("Should return paginated posts filtered by tagId and user is admin", async () => {
             // Arrange
             vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
             vi.mocked(PostModel.findAndCountAll).mockResolvedValue({
@@ -141,7 +177,7 @@ describe("post.service", () => {
             );
 
             // Act
-            const result = await findAllPosts(1, 1, undefined);
+            const result = await findAllPosts(1, 1, undefined, true);
 
             // Assert
             expect(checkPostTagById).toHaveBeenCalledWith(1);
@@ -154,7 +190,7 @@ describe("post.service", () => {
             expect(result).toEqual(mockPaginatedPostsDto);
         });
 
-        it("Should return paginated posts filtered by search query", async () => {
+        it("Should return paginated posts filtered by search query and user is admin", async () => {
             // Arrange
             vi.mocked(PostModel.findAndCountAll).mockResolvedValue({
                 count: 40,
@@ -167,7 +203,7 @@ describe("post.service", () => {
             );
 
             // Act
-            const result = await findAllPosts(1, undefined, "typescript");
+            const result = await findAllPosts(1, undefined, "typescript", true);
 
             // Assert
             expect(checkPostTagById).not.toHaveBeenCalled();
@@ -199,7 +235,7 @@ describe("post.service", () => {
             });
 
             // Act
-            const result = await findAllPosts(1, undefined, undefined);
+            const result = await findAllPosts(1, undefined, undefined, true);
 
             // Assert
             expect(checkPostTagsByIds).toHaveBeenCalledWith([]);
@@ -241,20 +277,52 @@ describe("post.service", () => {
     });
 
     describe("findPostById", () => {
-        it("Should return a post if exists", async () => {
+        it("Should return Not Found exception if a post exists but status is not published and user is not an admin", async () => {
             // Arrange
             vi.mocked(PostModel.findByPk).mockResolvedValue(mockPost);
             vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
             vi.mocked(toPostResponseDto).mockReturnValue(mockPostDto);
 
             // Act
-            const result = await findPostById(mockPost.postId);
+            const result = findPostById(mockPost.postId, false);
+
+            // Assert
+            await expect(result).rejects.toThrow(NotFoundException);
+            expect(PostModel.findByPk).toHaveBeenCalledWith(1);
+            expect(checkPostTagById).not.toHaveBeenCalled();
+            expect(toPostResponseDto).not.toHaveBeenCalled();
+        });
+
+        it("Should return post if a post exists tatus is not published and user is an admin", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(mockPost);
+            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
+            vi.mocked(toPostResponseDto).mockReturnValue(mockPostDto);
+
+            // Act
+            const result = await findPostById(mockPost.postId, true);
 
             // Assert
             expect(PostModel.findByPk).toHaveBeenCalledWith(1);
-            expect(checkPostTagById).toHaveBeenCalledWith(1);
-            expect(toPostResponseDto).toHaveBeenCalledWith(mockPost, mockTag);
+            expect(checkPostTagById).toHaveBeenCalledOnce();
+            expect(toPostResponseDto).toHaveBeenCalledOnce();
             expect(result).toEqual(mockPostDto);
+        });
+
+        it("Should return post if a post exists status is published and user is not an admin", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(publishedMockPost);
+            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
+            vi.mocked(toPostResponseDto).mockReturnValue(mockPublishedPostDto);
+
+            // Act
+            const result = await findPostById(mockPost.postId, false);
+
+            // Assert
+            expect(PostModel.findByPk).toHaveBeenCalledWith(1);
+            expect(checkPostTagById).toHaveBeenCalledOnce();
+            expect(toPostResponseDto).toHaveBeenCalledOnce();
+            expect(result).toEqual(mockPublishedPostDto);
         });
 
         it("Should throw NotFoundException when post does not exist", async () => {
@@ -262,7 +330,7 @@ describe("post.service", () => {
             vi.mocked(PostModel.findByPk).mockResolvedValue(null);
 
             // Act
-            const result = findPostById(999);
+            const result = findPostById(999, false);
 
             // Assert
             await expect(result).rejects.toThrow(NotFoundException);
@@ -278,7 +346,7 @@ describe("post.service", () => {
             );
 
             // Act
-            const result = findPostById(1);
+            const result = findPostById(1, false);
 
             // Assert
             await expect(result).rejects.toThrow(InternalServerException);

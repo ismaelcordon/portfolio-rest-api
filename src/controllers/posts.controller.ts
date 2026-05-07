@@ -42,7 +42,7 @@ export const getPostById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const post = await findPostById(Number(id));
+        const post = await findPostById(Number(id), res.locals.isAdmin);
 
         sendSuccess(res, "Post successfully retrieved", post);
     } catch (error) {
@@ -68,7 +68,12 @@ export const getAllPosts = async (req: Request, res: Response) => {
             : undefined;
         const search = req.query.search ? String(req.query.search) : undefined;
 
-        const result = await findAllPosts(page, tagId, search);
+        const result = await findAllPosts(
+            page,
+            tagId,
+            search,
+            res.locals.isAdmin,
+        );
 
         return sendSuccess(res, "Posts successfully retrieved", result);
     } catch (error) {

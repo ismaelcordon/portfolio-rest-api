@@ -12,6 +12,7 @@ import { API_ROUTES } from "#utils/constants.utils.js";
 import { getPostValidator } from "#validators/get-post-validator.js";
 import { getAllPostsValidator } from "#validators/get-all-posts-validator";
 import { deletePost } from "../controllers/posts.controller";
+import { apiKeyMiddleware } from "#middlewares/api-key.middleware.js";
 
 const router = Router();
 
@@ -23,12 +24,34 @@ router.post(
     createPost,
 );
 
-router.get(API_ROUTES.POSTS.BY_ID, getPostValidator, validateBody, getPostById);
+router.get(
+    API_ROUTES.POSTS.BY_ID,
+    apiKeyMiddleware(),
+    getPostValidator,
+    validateBody,
+    getPostById,
+);
 
-router.get("/", getAllPostsValidator, validateBody, getAllPosts);
+router.get(
+    "/",
+    apiKeyMiddleware(),
+    getAllPostsValidator,
+    validateBody,
+    getAllPosts,
+);
 
-router.patch(API_ROUTES.POSTS.HIDE_BY_ID, hidePost);
+router.patch(
+    API_ROUTES.POSTS.HIDE_BY_ID,
+    apiKeyMiddleware(true),
+    validateBody,
+    hidePost,
+);
 
-router.delete(API_ROUTES.POSTS.BY_ID, deletePost);
+router.delete(
+    API_ROUTES.POSTS.BY_ID,
+    apiKeyMiddleware(true),
+    validateBody,
+    deletePost,
+);
 
 export default router;

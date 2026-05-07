@@ -1,4 +1,5 @@
-import { PostStatus } from "#types/post.types";
+import { PostModel } from "#models/sequelize/post.sequelize.js";
+import { PostStatus } from "#types/post.types.js";
 
 export const mockPost = {
     postId: 1,
@@ -12,6 +13,11 @@ export const mockPost = {
     tagId: 1,
     createdAt: new Date("2026-04-21T10:00:00Z"),
     updatedAt: new Date("2026-04-21T10:00:00Z"),
+} as any;
+
+export const publishedMockPost = {
+    ...mockPost,
+    status: PostStatus.PUBLISHED,
 } as any;
 
 export const mockPostDto = {
@@ -29,6 +35,11 @@ export const mockPostDto = {
         tagId: 1,
         description: "TypeScript",
     },
+};
+
+export const mockPublishedPostDto = {
+    ...mockPostDto,
+    status: PostStatus.PUBLISHED,
 };
 
 export const mockCreatePostDto = {
@@ -81,3 +92,38 @@ export const mockHiddenPost = {
     ...mockPost,
     status: PostStatus.HIDDEN,
 } as any;
+
+export const postModelArray = () => [
+    PostModel.create({
+        title: "Published post 1",
+        description: createPostDto.description,
+        content: createPostDto.content,
+        readingTime: createPostDto.reading_time,
+        status: PostStatus.PUBLISHED,
+        tagId: 1,
+    }),
+    PostModel.create({
+        title: "Published post 2",
+        description: createPostDto.description,
+        content: createPostDto.content,
+        readingTime: createPostDto.reading_time,
+        status: PostStatus.PUBLISHED,
+        tagId: 1,
+    }),
+    PostModel.create({
+        title: "Draft post",
+        description: createPostDto.description,
+        content: createPostDto.content,
+        readingTime: createPostDto.reading_time,
+        status: PostStatus.DRAFT,
+        tagId: 1,
+    }),
+    PostModel.create({
+        title: "Hidden post",
+        description: createPostDto.description,
+        content: createPostDto.content,
+        readingTime: createPostDto.reading_time,
+        status: PostStatus.HIDDEN,
+        tagId: 1,
+    }),
+];

@@ -210,3 +210,234 @@ Returns a blog post if it exists.
 - Returns the post together with its related tag information
 - If the provided `id` is invalid, the endpoint should return `VALIDATION_ERROR`
 - If the post does not exist, the endpoint should return `NOT_FOUND`
+
+### `PATCH /posts/:id/hide`
+
+Sets a post status to `HIDDEN`, making it not visible on the website.
+
+**Authentication:** No
+
+#### Route Parameters
+
+- `id` → post identifier
+
+#### Success Response
+
+**Status:** `200 OK`
+
+```json
+{
+    "message": "Post hidden successfully",
+    "data": null
+}
+```
+
+#### Possible Responses
+
+- `200` → post hidden successfully
+- `400` → `VALIDATION_ERROR`
+- `404` → `NOT_FOUND`
+- `500` → `INTERNAL_SERVER_ERROR`
+
+---
+
+### `DELETE /posts/:id/delete`
+
+Deletes a post permanently from the database.
+
+**Authentication:** No
+
+#### Route Parameters
+
+- `id` → post identifier
+
+#### Success Response
+
+**Status:** `204 No Content`
+
+(No response body)
+
+#### Possible Responses
+
+- `204` → post deleted successfully
+- `400` → `VALIDATION_ERROR`
+- `404` → `NOT_FOUND`
+- `500` → `INTERNAL_SERVER_ERROR`
+
+#### Notes
+
+- This operation is irreversible
+- The post is permanently removed from the database
+
+---
+
+### `PATCH /posts/:id/publish`
+
+Sets a post status to `PUBLISHED` and updates the `published_at` field.
+
+**Authentication:** No
+
+#### Route Parameters
+
+- `id` → post identifier
+
+#### Success Response
+
+**Status:** `200 OK`
+
+```json
+{
+    "message": "Post published successfully",
+    "data": null
+}
+```
+
+#### Possible Responses
+
+- `200` → post published successfully
+- `400` → `VALIDATION_ERROR`
+- `404` → `NOT_FOUND`
+- `409` → `CONFLICT`
+- `500` → `INTERNAL_SERVER_ERROR`
+
+#### Notes
+
+- Posts can be published from the following states:
+    - `DRAFT`
+    - `SCHEDULED`
+    - `HIDDEN`
+
+---
+
+### `PATCH /posts/:id/schedule`
+
+Schedules a post by setting its status to `SCHEDULED`.
+
+**Authentication:** No
+
+#### Route Parameters
+
+- `id` → post identifier
+
+#### Request Body
+
+```json
+{
+    "scheduled_at": "2026-04-25T10:00:00.000Z"
+}
+```
+
+#### Success Response
+
+**Status:** `200 OK`
+
+```json
+{
+    "message": "Post scheduled successfully",
+    "data": null
+}
+```
+
+#### Possible Responses
+
+- `200` → post scheduled successfully
+- `400` → `VALIDATION_ERROR`
+- `404` → `NOT_FOUND`
+- `409` → `CONFLICT`
+- `500` → `INTERNAL_SERVER_ERROR`
+
+#### Notes
+
+- `scheduled_at` must be a valid ISO 8601 datetime with timezone
+- Posts can be scheduled from:
+    - `DRAFT`
+    - `SCHEDULED`
+
+---
+
+### `GET /posts/scheduled/due`
+
+Returns the IDs of posts that are scheduled and ready to be published.
+
+A post is considered "due" if:
+
+- its status is `SCHEDULED`
+- `scheduled_at` is less than or equal to the current date
+
+**Authentication:** No
+
+#### Success Response
+
+**Status:** `200 OK`
+
+```json
+{
+    "message": "Scheduled posts retrieved successfully",
+    "data": [
+        {
+            "post_id": 12
+        },
+        {
+            "post_id": 15
+        }
+    ]
+}
+```
+
+#### Possible Responses
+
+- `200` → scheduled posts retrieved successfully
+- `500` → `INTERNAL_SERVER_ERROR`
+
+#### Notes
+
+- This endpoint is primarily intended for internal or automated usage
+
+## CV
+
+### `POST /cv`
+
+Generates and returns the CV document as a PDF file.
+
+The PDF response is intended to be opened directly in a new browser tab or downloaded by the client.
+
+**Authentication:** No
+
+#### Headers
+
+| Header            | Required | Description                                                                                                     |
+| ----------------- | -------: | --------------------------------------------------------------------------------------------------------------- |
+| `Accept-Language` |       No | Language used to generate the CV. Accepted values: `es`, `en`. Defaults to English when missing or unsupported. |
+
+#### Accepted Languages
+
+- `es` → Spanish CV
+- `en` → English CV
+- missing or unsupported value → English CV
+
+#### Example Request
+
+```http
+POST /cv
+Accept-Language: es
+```
+
+#### Success Response
+
+**Status:** `200 OK`
+
+**Content-Type:** `application/pdf`
+
+The endpoint returns a PDF binary response.
+
+#### Possible Responses
+
+- `200` → CV PDF generated successfully
+- `500` → `INTERNAL_SERVER_ERROR`
+
+#### Notes
+
+- This endpoint does not return the standard JSON response format.
+- The response body is the generated PDF file.
+- The frontend can open the response in a new browser tab using a blob URL.
+- If `Accept-Language` is not provided or does not match `es` or `en`, the English version is returned by default.

@@ -22,6 +22,10 @@ export const API_ROUTES = {
         },
         HIDE_BY_ID: "/:id/hide",
     },
+
+    CV: {
+        BASE: "/cv",
+    },
 };
 
 export const POSTS_PER_PAGE = 20;

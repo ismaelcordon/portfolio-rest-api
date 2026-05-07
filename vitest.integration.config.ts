@@ -30,10 +30,7 @@ export default defineConfig({
             DB_USER: process.env.DB_USER || "postgres",
             DB_PASSWORD: process.env.DB_PASSWORD || "postgres",
             NODE_ENV: "test",
-            JWT_SECRET: process.env.DB_PASSWORD || "",
-            JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "",
-            JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "",
-            JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "",
+            API_KEY: process.env.test || "test-api-key",
         },
         coverage: {
             provider: "v8",

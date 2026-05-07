@@ -14,7 +14,7 @@ import {
     insertNewPost,
     updatePostToHidden,
 } from "#services/posts.service.js";
-import { HTTP_STATUSES } from "#utils/constants.utils";
+import { HTTP_STATUSES } from "#utils/constants.utils.js";
 import { Request, Response } from "express";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -22,7 +22,7 @@ import {
     mockPaginatedPostsDto,
     mockPostDto,
 } from "../../fixtures/post.fixtures";
-import { ConflictException } from "#exceptions/conflict.exception";
+import { ConflictException } from "#exceptions/conflict.exception.js";
 
 vi.mock("#services/posts.service.js", () => ({
     insertNewPost: vi.fn(),
@@ -48,11 +48,15 @@ describe("post.controller", () => {
             body: mockCreatePostDto,
         } as Request;
 
-        res = {} as Response;
+        res = {
+            locals: {
+                isAdmin: false,
+            },
+        } as unknown as Response;
     });
 
     describe("getAllPosts", () => {
-        it("Should return paginated posts successfully", async () => {
+        it("Should return paginated posts successfully with isAdmin is false when not admin", async () => {
             // Arrange
             req.query = { page: "1", tag_id: "2" };
             vi.mocked(findAllPosts).mockResolvedValue(mockPaginatedPostsDto);
@@ -61,7 +65,26 @@ describe("post.controller", () => {
             await getAllPosts(req, res);
 
             // Assert
-            expect(findAllPosts).toHaveBeenCalledWith(1, 2, undefined);
+            expect(findAllPosts).toHaveBeenCalledWith(1, 2, undefined, false);
+            expect(sendSuccess).toHaveBeenCalledWith(
+                res,
+                "Posts successfully retrieved",
+                mockPaginatedPostsDto,
+            );
+            expect(sendError).not.toHaveBeenCalled();
+        });
+
+        it("Should return paginated posts successfully with isAdmin is true when admin", async () => {
+            // Arrange
+            req.query = { page: "1", tag_id: "2" };
+            res.locals.isAdmin = true;
+            vi.mocked(findAllPosts).mockResolvedValue(mockPaginatedPostsDto);
+
+            // Act
+            await getAllPosts(req, res);
+
+            // Assert
+            expect(findAllPosts).toHaveBeenCalledWith(1, 2, undefined, true);
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
                 "Posts successfully retrieved",
@@ -79,7 +102,12 @@ describe("post.controller", () => {
             await getAllPosts(req, res);
 
             // Assert
-            expect(findAllPosts).toHaveBeenCalledWith(1, undefined, undefined);
+            expect(findAllPosts).toHaveBeenCalledWith(
+                1,
+                undefined,
+                undefined,
+                false,
+            );
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
                 "Posts successfully retrieved",
@@ -102,6 +130,7 @@ describe("post.controller", () => {
                 1,
                 undefined,
                 searchQuery,
+                false,
             );
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
@@ -120,7 +149,12 @@ describe("post.controller", () => {
             await getAllPosts(req, res);
 
             // Assert
-            expect(findAllPosts).toHaveBeenCalledWith(1, undefined, undefined);
+            expect(findAllPosts).toHaveBeenCalledWith(
+                1,
+                undefined,
+                undefined,
+                false,
+            );
         });
 
         it("Should return not found exception response when tagId does not exist", async () => {
@@ -227,7 +261,7 @@ describe("post.controller", () => {
     });
 
     describe("getPostById", () => {
-        it("Should return the post with the specified id", async () => {
+        it("Should return the post with the specified id with isAdmin false when not admin", async () => {
             // Arrange
             req.params = { id: "1" };
             vi.mocked(findPostById).mockResolvedValue(mockPostDto);
@@ -236,7 +270,29 @@ describe("post.controller", () => {
             await getPostById(req, res);
 
             // Assert
-            expect(findPostById).toHaveBeenCalledWith(mockPostDto.postId);
+            expect(findPostById).toHaveBeenCalledWith(
+                mockPostDto.postId,
+                false,
+            );
+            expect(sendSuccess).toHaveBeenCalledWith(
+                res,
+                "Post successfully retrieved",
+                mockPostDto,
+            );
+            expect(sendError).not.toHaveBeenCalled();
+        });
+
+        it("Should return the post with the specified id with isAdmin true when admin", async () => {
+            // Arrange
+            req.params = { id: "1" };
+            res.locals.isAdmin = true;
+            vi.mocked(findPostById).mockResolvedValue(mockPostDto);
+
+            // Act
+            await getPostById(req, res);
+
+            // Assert
+            expect(findPostById).toHaveBeenCalledWith(mockPostDto.postId, true);
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
                 "Post successfully retrieved",
@@ -257,7 +313,7 @@ describe("post.controller", () => {
             await getPostById(req, res);
 
             // Assert
-            expect(findPostById).toHaveBeenCalledWith(999);
+            expect(findPostById).toHaveBeenCalledWith(999, false);
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,
@@ -279,7 +335,7 @@ describe("post.controller", () => {
             await getPostById(req, res);
 
             // Assert
-            expect(findPostById).toHaveBeenCalledWith(1);
+            expect(findPostById).toHaveBeenCalledWith(1, false);
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,

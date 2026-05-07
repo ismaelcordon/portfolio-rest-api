@@ -132,3 +132,13 @@ export const mockPublishedPost = {
     status: PostStatus.PUBLISHED,
     publishedAt: new Date("2026-04-21T10:00:00Z"),
 } as any;
+
+export const mockScheduledPost = {
+    ...mockPost,
+    status: PostStatus.SCHEDULED,
+    scheduledAt: new Date("2026-05-01T10:00:00Z"),
+} as any;
+
+export const currentDatePlus3Hours = new Date(
+    new Date().getTime() + 3 * 60 * 60 * 1000,
+).toISOString();

@@ -22,6 +22,8 @@ export const API_ROUTES = {
         },
         HIDE_BY_ID: "/:id/hide",
         PUBLISH_BY_ID: "/:id/publish",
+        SCHEDULE_BY_ID: "/:id/schedule",
+        SCHEDULED_DUE: "/scheduled/due",
     },
 
     CV: {

@@ -5,6 +5,7 @@ import {
     getPostById,
     hidePost,
     publishPost,
+    schedulePost,
 } from "#controllers/posts.controller.js";
 import { NotFoundException } from "#exceptions/not-found.exception.js";
 import { sendError, sendSuccess } from "#helpers/response.helper.js";
@@ -15,6 +16,7 @@ import {
     insertNewPost,
     updatePostToHidden,
     updatePostToPublished,
+    updatePostToScheduled,
 } from "#services/posts.service.js";
 import { HTTP_STATUSES } from "#utils/constants.utils.js";
 import { Request, Response } from "express";
@@ -33,6 +35,7 @@ vi.mock("#services/posts.service.js", () => ({
     updatePostToHidden: vi.fn(),
     destroyPost: vi.fn(),
     updatePostToPublished: vi.fn(),
+    updatePostToScheduled: vi.fn(),
 }));
 
 vi.mock("#helpers/response.helper.js", () => ({
@@ -542,6 +545,99 @@ describe("post.controller", () => {
 
             // Act
             await publishPost(req, res);
+
+            // Assert
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                "Unexpected error",
+                "UNKNOWN_ERROR",
+            );
+        });
+    });
+
+    describe("schedulePost", () => {
+        it("Should schedule a post successfully", async () => {
+            // Arrange
+            req.params = { id: "1" };
+            req.body = { scheduledAt: "2026-05-01T12:00:00+02:00" };
+            vi.mocked(updatePostToScheduled).mockResolvedValue(undefined);
+
+            // Act
+            await schedulePost(req, res);
+
+            // Assert
+            expect(updatePostToScheduled).toHaveBeenCalledWith(
+                1,
+                "2026-05-01T12:00:00+02:00",
+            );
+            expect(sendSuccess).toHaveBeenCalledWith(
+                res,
+                "Post scheduled successfully",
+            );
+            expect(sendError).not.toHaveBeenCalled();
+        });
+
+        it("Should return controlled error response when service throws ConflictException", async () => {
+            // Arrange
+            req.params = { id: "1" };
+            req.body = { scheduledAt: "2026-05-01T12:00:00+02:00" };
+            const conflictException = new ConflictException(
+                "Post with id 1 cannot be scheduled",
+            );
+            vi.mocked(updatePostToScheduled).mockRejectedValue(
+                conflictException,
+            );
+
+            // Act
+            await schedulePost(req, res);
+
+            // Assert
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                conflictException.message,
+                conflictException.code,
+                null,
+                conflictException.statusCode,
+            );
+        });
+
+        it("Should return controlled error response when service throws NotFoundException", async () => {
+            // Arrange
+            req.params = { id: "999" };
+            req.body = { scheduledAt: "2026-05-01T12:00:00+02:00" };
+            const notFoundException = new NotFoundException(
+                "Post with id 999 not found",
+            );
+            vi.mocked(updatePostToScheduled).mockRejectedValue(
+                notFoundException,
+            );
+
+            // Act
+            await schedulePost(req, res);
+
+            // Assert
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                notFoundException.message,
+                notFoundException.code,
+                null,
+                notFoundException.statusCode,
+            );
+        });
+
+        it("Should return internal server error response when service throws unexpected error", async () => {
+            // Arrange
+            req.params = { id: "1" };
+            req.body = { scheduledAt: "2026-05-01T12:00:00+02:00" };
+            vi.mocked(updatePostToScheduled).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            await schedulePost(req, res);
 
             // Assert
             expect(sendSuccess).not.toHaveBeenCalled();

@@ -372,3 +372,55 @@ Potential improvements as the project grows:
 The architecture is implemented in the `src/` directory.
 
 This document must be updated if the structure or responsibilities change.
+
+## Scheduled Post Publishing
+
+The system includes an automated process to publish scheduled posts.
+
+### Script
+
+The logic is implemented in:
+
+```text
+scripts/publish-scheduled-posts.js
+```
+
+### Behavior
+
+The script performs the following steps:
+
+1. Calls the endpoint:
+
+```text
+GET /posts/scheduled/due
+```
+
+2. Retrieves all posts that are ready to be published
+
+3. Iterates over the returned post IDs
+
+4. Calls the publish endpoint for each post:
+
+```text
+PATCH /posts/:id/publish
+```
+
+### Execution
+
+The script runs automatically on the server using:
+
+- `launchctl` (macOS scheduler)
+
+### Purpose
+
+This mechanism allows:
+
+- delayed publishing of posts
+- automation of scheduled content
+- separation between API logic and background processing
+
+### Notes
+
+- This process is not triggered by the API itself
+- It depends on an external scheduler (`launchctl`)
+- The endpoint `/posts/scheduled/due` is designed specifically to support this workflow

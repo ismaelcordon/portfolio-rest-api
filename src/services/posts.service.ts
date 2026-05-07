@@ -169,3 +169,57 @@ export const updatePostToPublished = async (postId: number) => {
         );
     }
 };
+
+export const updatePostToScheduled = async (
+    postId: number,
+    scheduledAt: string,
+) => {
+    try {
+        console.log(`scheduledAt received: ${scheduledAt}`);
+        console.log(`new date: ${new Date(scheduledAt)}`);
+
+        const post = await PostModel.findByPk(postId);
+
+        if (!post) {
+            throw new NotFoundException(`Post with id ${postId} not found`);
+        }
+
+        if (
+            post.status === PostStatus.PUBLISHED ||
+            post.status === PostStatus.HIDDEN
+        ) {
+            throw new ConflictException(
+                `Post with id ${postId} cannot be scheduled, it is already published`,
+            );
+        }
+
+        await post.update({
+            status: PostStatus.SCHEDULED,
+            scheduledAt: new Date(scheduledAt),
+        });
+    } catch (error) {
+        if (error instanceof CustomException) throw error;
+        throw new InternalServerException(
+            error instanceof Error ? error.message : "Unexpected error",
+        );
+    }
+};
+
+export const findScheduledPosts = async (): Promise<number[]> => {
+    try {
+        const posts = await PostModel.findAll({
+            where: {
+                status: PostStatus.SCHEDULED,
+                scheduledAt: { [Op.lte]: new Date() },
+            },
+            attributes: ["postId"],
+        });
+
+        return posts.map((post) => post.postId);
+    } catch (error) {
+        if (error instanceof CustomException) throw error;
+        throw new InternalServerException(
+            error instanceof Error ? error.message : "Unexpected error",
+        );
+    }
+};

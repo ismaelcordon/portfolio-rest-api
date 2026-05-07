@@ -4,6 +4,7 @@ import {
     getAllPosts,
     getPostById,
     hidePost,
+    publishPost,
 } from "#controllers/posts.controller.js";
 import { NotFoundException } from "#exceptions/not-found.exception.js";
 import { sendError, sendSuccess } from "#helpers/response.helper.js";
@@ -13,6 +14,7 @@ import {
     findPostById,
     insertNewPost,
     updatePostToHidden,
+    updatePostToPublished,
 } from "#services/posts.service.js";
 import { HTTP_STATUSES } from "#utils/constants.utils.js";
 import { Request, Response } from "express";
@@ -30,6 +32,7 @@ vi.mock("#services/posts.service.js", () => ({
     findAllPosts: vi.fn(),
     updatePostToHidden: vi.fn(),
     destroyPost: vi.fn(),
+    updatePostToPublished: vi.fn(),
 }));
 
 vi.mock("#helpers/response.helper.js", () => ({
@@ -453,6 +456,92 @@ describe("post.controller", () => {
 
             // Act
             await deletePost(req, res);
+
+            // Assert
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                "Unexpected error",
+                "UNKNOWN_ERROR",
+            );
+        });
+    });
+
+    describe("publishPost", () => {
+        it("Should publish a post successfully", async () => {
+            // Arrange
+            req.params = { id: "1" };
+            vi.mocked(updatePostToPublished).mockResolvedValue(undefined);
+
+            // Act
+            await publishPost(req, res);
+
+            // Assert
+            expect(updatePostToPublished).toHaveBeenCalledWith(1);
+            expect(sendSuccess).toHaveBeenCalledWith(
+                res,
+                "Post published successfully",
+            );
+            expect(sendError).not.toHaveBeenCalled();
+        });
+
+        it("Should return controlled error response when service throws ConflictException", async () => {
+            // Arrange
+            req.params = { id: "1" };
+            const conflictException = new ConflictException(
+                "Post with id 1 is already published",
+            );
+            vi.mocked(updatePostToPublished).mockRejectedValue(
+                conflictException,
+            );
+
+            // Act
+            await publishPost(req, res);
+
+            // Assert
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                conflictException.message,
+                conflictException.code,
+                null,
+                conflictException.statusCode,
+            );
+        });
+
+        it("Should return controlled error response when service throws NotFoundException", async () => {
+            // Arrange
+            req.params = { id: "999" };
+            const notFoundException = new NotFoundException(
+                "Post with id 999 not found",
+            );
+            vi.mocked(updatePostToPublished).mockRejectedValue(
+                notFoundException,
+            );
+
+            // Act
+            await publishPost(req, res);
+
+            // Assert
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                notFoundException.message,
+                notFoundException.code,
+                null,
+                notFoundException.statusCode,
+            );
+        });
+
+        it("Should return internal server error response when service throws unexpected error", async () => {
+            // Arrange
+            req.params = { id: "1" };
+            vi.mocked(updatePostToPublished).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            await publishPost(req, res);
 
             // Assert
             expect(sendSuccess).not.toHaveBeenCalled();

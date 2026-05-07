@@ -127,3 +127,8 @@ export const postModelArray = () => [
         tagId: 1,
     }),
 ];
+export const mockPublishedPost = {
+    ...mockPost,
+    status: PostStatus.PUBLISHED,
+    publishedAt: new Date("2026-04-21T10:00:00Z"),
+} as any;

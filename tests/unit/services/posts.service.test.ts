@@ -6,11 +6,12 @@ import {
 } from "#services/post-tags.service.js";
 import {
     destroyPost,
+    findAllPosts,
+    findPostById,
     insertNewPost,
     updatePostToHidden,
-    findPostById,
-    findAllPosts,
-} from "../../../src/services/posts.service";
+    updatePostToPublished,
+} from "#services/posts.service.js";
 import {
     toPaginatedPostsResponseDto,
     toPostResponseDto,
@@ -24,6 +25,7 @@ import {
     mockPost,
     mockPostDto,
     mockPostList,
+    mockPublishedPost,
     mockPublishedPostDto,
     publishedMockPost,
 } from "../../fixtures/post.fixtures.js";
@@ -528,6 +530,69 @@ describe("post.service", () => {
 
             // Act
             const result = destroyPost(1);
+
+            // Assert
+            await expect(result).rejects.toThrow(InternalServerException);
+            await expect(result).rejects.toThrow("Database crashed");
+        });
+    });
+
+    describe("publishPost", () => {
+        it("Should publish a post successfully", async () => {
+            // Arrange
+            const mockPostWithUpdate = {
+                ...mockPost,
+                update: vi.fn().mockResolvedValue(undefined),
+            };
+            vi.mocked(PostModel.findByPk).mockResolvedValue(
+                mockPostWithUpdate as any,
+            );
+
+            // Act
+            await updatePostToPublished(mockPost.postId);
+
+            // Assert
+            expect(PostModel.findByPk).toHaveBeenCalledWith(mockPost.postId);
+            expect(mockPostWithUpdate.update).toHaveBeenCalledWith({
+                status: PostStatus.PUBLISHED,
+                publishedAt: expect.any(Date),
+            });
+        });
+
+        it("Should throw NotFoundException when post does not exist", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(null);
+
+            // Act
+            const result = updatePostToPublished(999);
+
+            // Assert
+            await expect(result).rejects.toThrow(NotFoundException);
+            await expect(result).rejects.toThrow("Post with id 999 not found");
+        });
+
+        it("Should throw ConflictException when post is already published", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(mockPublishedPost);
+
+            // Act
+            const result = updatePostToPublished(mockPublishedPost.postId);
+
+            // Assert
+            await expect(result).rejects.toThrow(ConflictException);
+            await expect(result).rejects.toThrow(
+                `Post with id ${mockPublishedPost.postId} is already published`,
+            );
+        });
+
+        it("Should throw InternalServerException when an unexpected error occurs", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            const result = updatePostToPublished(1);
 
             // Assert
             await expect(result).rejects.toThrow(InternalServerException);

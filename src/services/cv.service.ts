@@ -4,6 +4,7 @@ import { NotFoundException } from "#exceptions/not-found.exception.js";
 import path from "node:path";
 import fs from "node:fs";
 import { Lang } from "#types/api.types.js";
+import { handleServiceError } from "#helpers/error.helper.js";
 
 export const resolveLang = (acceptLanguage?: string): Lang => {
     const header = (acceptLanguage || "").toLowerCase();
@@ -30,10 +31,6 @@ export const findCvPdfByLanguage = async (acceptLanguage?: string) => {
 
         return absolutePath;
     } catch (error) {
-        if (error instanceof CustomException) throw error;
-
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };

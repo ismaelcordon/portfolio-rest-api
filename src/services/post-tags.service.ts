@@ -1,7 +1,32 @@
+import { toTagDto } from "#mappers/tag.mapper.js";
 import { TagModel } from "#models/sequelize/post-tag.sequelize";
-import { CustomException } from "../exceptions/custom.exception";
-import { InternalServerException } from "../exceptions/internal-server.exception";
-import { NotFoundException } from "../exceptions/not-found.exception";
+import { NotFoundException } from "#exceptions/not-found.exception";
+import { handleServiceError } from "#helpers/error.helper.js";
+
+export const findAllTags = async () => {
+    try {
+        const tags = await TagModel.findAll();
+        return tags.map((tagModel) => toTagDto(tagModel));
+    } catch (error) {
+        return handleServiceError(error);
+    }
+};
+
+export const findFirstTag = async () => {
+    try {
+        const tag = await TagModel.findOne({
+            order: [["tagId", "ASC"]],
+        });
+
+        if (!tag) {
+            throw new NotFoundException("No tags found");
+        }
+
+        return tag;
+    } catch (error) {
+        return handleServiceError(error);
+    }
+};
 
 export const checkPostTagById = async (postTagId: number) => {
     try {
@@ -15,10 +40,7 @@ export const checkPostTagById = async (postTagId: number) => {
 
         return postTag;
     } catch (error) {
-        if (error instanceof CustomException) throw error;
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };
 
@@ -29,8 +51,6 @@ export const checkPostTagsByIds = async (tagIds: number[]) => {
         });
         return tags;
     } catch (error) {
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };

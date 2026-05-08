@@ -13,7 +13,6 @@ export const HTTP_STATUSES = {
 
 export const API_ROUTES = {
     BASE: "/dev/api",
-
     POSTS: {
         BASE: "/posts",
         BY_ID: "/:id",
@@ -25,7 +24,9 @@ export const API_ROUTES = {
         SCHEDULE_BY_ID: "/:id/schedule",
         SCHEDULED_DUE: "/scheduled/due",
     },
-
+    TAGS: {
+        BASE: "/tags",
+    },
     CV: {
         BASE: "/cv",
     },

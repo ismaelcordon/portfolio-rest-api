@@ -1,17 +1,20 @@
-import { CreatePostRequestDto } from "#dtos/CreatePostRequest.dto.js";
 import { InternalServerException } from "#exceptions/internal-server.exception.js";
 import { PostModel } from "#models/sequelize/post.sequelize";
 import { PostStatus } from "#types/post.types";
 import { POSTS_PER_PAGE } from "#utils/constants.utils";
 import { Op, WhereOptions } from "sequelize";
-import { CustomException } from "../exceptions/custom.exception";
 import { NotFoundException } from "../exceptions/not-found.exception";
 import {
     toPaginatedPostsResponseDto,
     toPostResponseDto,
 } from "../mappers/post.mappers";
-import { checkPostTagById, checkPostTagsByIds } from "./post-tags.service";
+import {
+    checkPostTagById,
+    checkPostTagsByIds,
+    findFirstTag,
+} from "./post-tags.service";
 import { ConflictException } from "#exceptions/conflict.exception";
+import { handleServiceError } from "#helpers/error.helper.js";
 
 export const findAllPosts = async (
     page: number,
@@ -21,7 +24,7 @@ export const findAllPosts = async (
 ) => {
     try {
         if (tagId) {
-            const tag = await checkPostTagById(tagId!);
+            const tag = await checkPostTagById(tagId);
 
             if (!tag) {
                 throw new NotFoundException(`Tag with id ${tagId} not found`);
@@ -42,20 +45,26 @@ export const findAllPosts = async (
             order: [["publishedAt", "DESC"]],
         });
 
-        const tagIds = [...new Set(rows.map((post) => post.tagId))];
-        const tags = await checkPostTagsByIds(tagIds);
+        const tagIds = [
+            ...new Set(
+                rows
+                    .map((post) => post.tagId)
+                    .filter((id): id is number => id != null),
+            ),
+        ];
+        const tags = (await checkPostTagsByIds(tagIds)) ?? [];
         const tagsMap = new Map(tags.map((tag) => [tag.tagId, tag]));
 
         const posts = rows.map((post) =>
-            toPostResponseDto(post, tagsMap.get(post.tagId)!),
+            toPostResponseDto(
+                post,
+                post.tagId != null ? (tagsMap.get(post.tagId) ?? null) : null,
+            ),
         );
 
         return toPaginatedPostsResponseDto(posts, count, page);
     } catch (error) {
-        if (error instanceof CustomException) throw error;
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };
 
@@ -75,32 +84,26 @@ export const findPostById = async (postId: number, isAdmin: boolean) => {
 
         return toPostResponseDto(post, tag);
     } catch (error) {
-        if (error instanceof CustomException) throw error;
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };
 
-export const insertNewPost = async (postData: CreatePostRequestDto) => {
+export const insertNewPost = async () => {
     try {
-        const tag = await checkPostTagById(postData.tagId);
+        const firstTag = await findFirstTag();
 
         const newPost = await PostModel.create({
-            title: postData.title,
-            description: postData.description,
-            content: postData.content,
-            readingTime: postData.readingTime,
+            title: "Sin título",
+            description: "",
+            content: "",
+            readingTime: 1,
             status: PostStatus.DRAFT,
-            tagId: postData.tagId,
+            tagId: firstTag?.tagId,
         });
 
-        return toPostResponseDto(newPost, tag);
+        return toPostResponseDto(newPost, firstTag);
     } catch (error) {
-        if (error instanceof CustomException) throw error;
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };
 
@@ -112,18 +115,23 @@ export const updatePostToHidden = async (postId: number) => {
             throw new NotFoundException(`Post with id ${postId} not found`);
         }
 
-        if (post.status === PostStatus.HIDDEN) {
+        if (
+            post.status === PostStatus.SCHEDULED ||
+            post.status === PostStatus.DRAFT
+        ) {
             throw new ConflictException(
-                `Post with id ${postId} is already hidden`,
+                `Post with id ${postId} cannot be hidden, need to be published `,
             );
         }
 
-        await post.update({ status: PostStatus.HIDDEN });
+        const status =
+            post.status === PostStatus.HIDDEN
+                ? PostStatus.PUBLISHED
+                : PostStatus.HIDDEN;
+
+        await post.update({ status: status });
     } catch (error) {
-        if (error instanceof CustomException) throw error;
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };
 
@@ -137,10 +145,7 @@ export const destroyPost = async (postId: number) => {
 
         await post.destroy();
     } catch (error) {
-        if (error instanceof CustomException) throw error;
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };
 
@@ -163,10 +168,7 @@ export const updatePostToPublished = async (postId: number) => {
             publishedAt: new Date(),
         });
     } catch (error) {
-        if (error instanceof CustomException) throw error;
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };
 
@@ -198,10 +200,7 @@ export const updatePostToScheduled = async (
             scheduledAt: new Date(scheduledAt),
         });
     } catch (error) {
-        if (error instanceof CustomException) throw error;
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };
 
@@ -217,9 +216,6 @@ export const findScheduledPosts = async (): Promise<number[]> => {
 
         return posts.map((post) => post.postId);
     } catch (error) {
-        if (error instanceof CustomException) throw error;
-        throw new InternalServerException(
-            error instanceof Error ? error.message : "Unexpected error",
-        );
+        return handleServiceError(error);
     }
 };

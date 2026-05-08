@@ -17,8 +17,8 @@ export class PostModel extends Model<
     declare postId: CreationOptional<number>;
 
     declare title: string;
-    declare description: string;
-    declare content: string;
+    declare description: CreationOptional<string | null>;
+    declare content: CreationOptional<string | null>;
     declare readingTime: number;
 
     declare status: PostStatus;
@@ -47,12 +47,12 @@ PostModel.init(
         },
         description: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
             field: "description",
         },
         content: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
             field: "content",
         },
         readingTime: {

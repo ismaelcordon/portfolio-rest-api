@@ -4,7 +4,6 @@ import { createApp } from "../../src/app";
 import request from "supertest";
 import {
     createPostDto,
-    createPostDtoWithInvalidTagId,
     createTagDTO,
     currentDatePlus3Hours,
     postModelArray,
@@ -13,6 +12,7 @@ import { PostModel } from "#models/sequelize/post.sequelize.js";
 import { TagModel } from "#models/sequelize/post-tag.sequelize.js";
 import { PostStatus } from "#types/post.types.js";
 import { withApiKey } from "../helpers/with-api-key.helpers";
+import { emptyPostDto } from "../fixtures/post.fixtures";
 
 const createNewPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}`;
 const findPostByIdEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
@@ -181,22 +181,6 @@ describe("Posts", () => {
     });
 
     describe("Insert new post", () => {
-        it("Return 404 if tag id does not exist", async () => {
-            // Arrange
-            await TagModel.create(createTagDTO);
-            const app = createApp();
-
-            // Act
-            const response = await withApiKey(
-                request(app)
-                    .post(createNewPostEndpoint)
-                    .send(createPostDtoWithInvalidTagId),
-            );
-
-            // Assert
-            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
-        });
-
         it("Inserts successfully", async () => {
             // Arrange
             await TagModel.create(createTagDTO);
@@ -205,11 +189,11 @@ describe("Posts", () => {
 
             // Act
             const response = await withApiKey(
-                request(app).post(createNewPostEndpoint).send(createPostDto),
+                request(app).post(createNewPostEndpoint),
             );
 
             const postDB = await PostModel.findOne({
-                where: { title: createPostDto.title },
+                where: { title: emptyPostDto.title },
             });
 
             // Assert
@@ -340,7 +324,7 @@ describe("Posts", () => {
             expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
         });
 
-        it("Should return 409 if post is already hidden", async () => {
+        it("Should return 409 if post has a status different from hidden or published", async () => {
             // Arrange
             await TagModel.create(createTagDTO);
             const post = await PostModel.create({
@@ -348,7 +332,7 @@ describe("Posts", () => {
                 description: createPostDto.description,
                 content: createPostDto.content,
                 readingTime: createPostDto.reading_time,
-                status: PostStatus.HIDDEN,
+                status: PostStatus.SCHEDULED,
                 tagId: 1,
             });
 
@@ -373,7 +357,7 @@ describe("Posts", () => {
                 description: createPostDto.description,
                 content: createPostDto.content,
                 readingTime: createPostDto.reading_time,
-                status: PostStatus.DRAFT,
+                status: PostStatus.PUBLISHED,
                 tagId: 1,
             });
 

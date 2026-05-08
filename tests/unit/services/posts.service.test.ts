@@ -6,7 +6,7 @@ import {
     findPostById,
     insertNewPost,
     updatePostEditableFields,
-    updatePostToHidden,
+    updatePostVisibility,
     updatePostToPublished,
     updatePostToScheduled,
 } from "#services/posts.service.js";
@@ -17,6 +17,8 @@ import {
 import { NotFoundException } from "#exceptions/not-found.exception.js";
 import { InternalServerException } from "#exceptions/internal-server.exception.js";
 import {
+    mockCreatePostDto,
+    mockDraftPost,
     mockHiddenPost,
     mockPaginatedPostsDto,
     mockPost,
@@ -39,6 +41,7 @@ import {
     checkPostTagsByIds,
     findFirstTag,
 } from "#services/post-tags.service.js";
+import { updatePost } from "../../../src/controllers/posts.controller";
 
 vi.mock("#models/sequelize/post.sequelize.js", () => {
     return {
@@ -409,11 +412,11 @@ describe("post.service", () => {
         });
     });
 
-    describe("hidePost", () => {
+    describe("changePostVisibility", () => {
         it("Should hide a post successfully", async () => {
             // Arrange
             const mockPostWithUpdate = {
-                ...mockPost,
+                ...mockPublishedPost,
                 update: vi.fn().mockResolvedValue(undefined),
                 status: PostStatus.PUBLISHED,
             };
@@ -423,7 +426,7 @@ describe("post.service", () => {
             vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
 
             // Act
-            await updatePostToHidden(mockPostWithUpdate.postId);
+            await updatePostVisibility(mockPost.postId);
 
             // Assert
             expect(PostModel.findByPk).toHaveBeenCalledWith(
@@ -439,7 +442,7 @@ describe("post.service", () => {
             vi.mocked(PostModel.findByPk).mockResolvedValue(null);
 
             // Act
-            const result = updatePostToHidden(999);
+            const result = updatePostVisibility(999);
 
             // Assert
             await expect(result).rejects.toThrow(NotFoundException);
@@ -453,12 +456,12 @@ describe("post.service", () => {
             vi.mocked(PostModel.findByPk).mockResolvedValue(mockScheduledPost);
 
             // Act
-            const result = updatePostToHidden(mockScheduledPost.postId);
+            const result = updatePostVisibility(mockScheduledPost.postId);
 
             // Assert
             await expect(result).rejects.toThrow(ConflictException);
             await expect(result).rejects.toThrow(
-                `Post with id ${mockScheduledPost.postId} cannot be hidden, need to be published `,
+                `Post with id ${mockScheduledPost.postId} cannot be hidden. Post needs to be published`,
             );
             expect(checkPostTagById).not.toHaveBeenCalled();
             expect(toPostResponseDto).not.toHaveBeenCalled();
@@ -471,7 +474,7 @@ describe("post.service", () => {
             );
 
             // Act
-            const result = destroyPost(1);
+            const result = updatePostVisibility(mockHiddenPost.postId);
 
             // Assert
             await expect(result).rejects.toThrow(InternalServerException);

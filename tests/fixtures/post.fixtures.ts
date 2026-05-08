@@ -72,6 +72,11 @@ export const mockPublishedPostDto = {
     status: PostStatus.PUBLISHED,
 };
 
+export const mockScheduledPostDto = {
+    ...mockPostDto,
+    status: PostStatus.SCHEDULED,
+} as any;
+
 export const mockCreatePostDto = {
     title: "Mi primer post",
     description: "Descripción del post",
@@ -164,6 +169,11 @@ export const mockScheduledPost = {
 export const currentDatePlus3Hours = new Date(
     new Date().getTime() + 3 * 60 * 60 * 1000,
 ).toISOString();
+
+export const mockDraftPost = {
+    ...mockPost,
+    status: PostStatus.DRAFT,
+};
 
 export const updatePostDto = {
     title: "Updated post title",

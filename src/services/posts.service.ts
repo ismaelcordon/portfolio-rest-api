@@ -108,7 +108,7 @@ export const insertNewPost = async () => {
     }
 };
 
-export const updatePostToHidden = async (postId: number) => {
+export const updatePostVisibility = async (postId: number) => {
     try {
         const post = await PostModel.findByPk(postId);
 
@@ -121,7 +121,7 @@ export const updatePostToHidden = async (postId: number) => {
             post.status === PostStatus.DRAFT
         ) {
             throw new ConflictException(
-                `Post with id ${postId} cannot be hidden, need to be published `,
+                `Post with id ${postId} cannot be hidden. Post needs to be published`,
             );
         }
 

@@ -19,7 +19,7 @@ export const API_ROUTES = {
         PARAMS: {
             ID: "id",
         },
-        HIDE_BY_ID: "/:id/hide",
+        CHANGE_VISIBILITY_BY_ID: "/:id/visibility",
         PUBLISH_BY_ID: "/:id/publish",
         SCHEDULE_BY_ID: "/:id/schedule",
         SCHEDULED_DUE: "/scheduled/due",

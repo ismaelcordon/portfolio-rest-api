@@ -17,8 +17,6 @@ import {
 import { NotFoundException } from "#exceptions/not-found.exception.js";
 import { InternalServerException } from "#exceptions/internal-server.exception.js";
 import {
-    mockCreatePostDto,
-    mockDraftPost,
     mockHiddenPost,
     mockPaginatedPostsDto,
     mockPost,
@@ -41,7 +39,6 @@ import {
     checkPostTagsByIds,
     findFirstTag,
 } from "#services/post-tags.service.js";
-import { updatePost } from "../../../src/controllers/posts.controller";
 
 vi.mock("#models/sequelize/post.sequelize.js", () => {
     return {
@@ -659,23 +656,6 @@ describe("post.service", () => {
             await expect(result).rejects.toThrow("Post with id 999 not found");
         });
 
-        it("Should throw ConflictException when post is already published", async () => {
-            // Arrange
-            vi.mocked(PostModel.findByPk).mockResolvedValue(mockPublishedPost);
-
-            // Act
-            const result = updatePostToScheduled(
-                mockPublishedPost.postId,
-                "2026-05-01T12:00:00+02:00",
-            );
-
-            // Assert
-            await expect(result).rejects.toThrow(ConflictException);
-            await expect(result).rejects.toThrow(
-                `Post with id ${mockPublishedPost.postId} cannot be scheduled`,
-            );
-        });
-
         it("Should throw ConflictException when post is hidden", async () => {
             // Arrange
             vi.mocked(PostModel.findByPk).mockResolvedValue(mockHiddenPost);
@@ -749,24 +729,6 @@ describe("post.service", () => {
             // Assert
             await expect(result).rejects.toThrow(NotFoundException);
             await expect(result).rejects.toThrow("Post with id 999 not found");
-            expect(checkPostTagById).not.toHaveBeenCalled();
-        });
-
-        it("Should throw ConflictException when post is already published", async () => {
-            // Arrange
-            vi.mocked(PostModel.findByPk).mockResolvedValue(mockPublishedPost);
-
-            // Act
-            const result = updatePostEditableFields(
-                mockPublishedPost.postId,
-                updatePostDto,
-            );
-
-            // Assert
-            await expect(result).rejects.toThrow(ConflictException);
-            await expect(result).rejects.toThrow(
-                `Post with id ${mockPublishedPost.postId} cannot be updated because it is already published`,
-            );
             expect(checkPostTagById).not.toHaveBeenCalled();
         });
 

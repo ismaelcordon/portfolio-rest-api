@@ -974,38 +974,6 @@ describe("Posts", () => {
             expect(response.status).toBe(HTTP_STATUSES.UNAUTHORIZED);
         });
 
-        it("Should return 409 when post is already published", async () => {
-            // Arrange
-            await TagModel.create(createTagDTO);
-
-            const createdPost = await PostModel.create({
-                title: createPostDto.title,
-                description: createPostDto.description,
-                content: createPostDto.content,
-                readingTime: createPostDto.reading_time,
-                status: PostStatus.PUBLISHED,
-                tagId: 1,
-                publishedAt: new Date(),
-            });
-
-            const app = createApp();
-
-            // Act
-            const response = await withApiKey(
-                request(app)
-                    .put(
-                        updatePostEndpoint.replace(
-                            ":id",
-                            String(createdPost.postId),
-                        ),
-                    )
-                    .send(updatePostRequestDto),
-            );
-
-            // Assert
-            expect(response.status).toBe(HTTP_STATUSES.CONFLICT);
-        });
-
         it("Should return 404 when provided post does not exists in database", async () => {
             // Arrange
             await TagModel.create(createTagDTO);

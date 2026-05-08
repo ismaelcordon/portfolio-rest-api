@@ -3,6 +3,7 @@ import { API_ROUTES, HTTP_STATUSES } from "#utils/constants.utils.js";
 import postRoutes from "#routes/posts.routes.js";
 import tagRoutes from "#routes/tags.routes.js";
 import cvRoutes from "#routes/cv.routes.js";
+import contactRoutes from "#routes/contact.routes.js";
 
 const apiRouter = Router();
 
@@ -17,5 +18,7 @@ apiRouter.use(API_ROUTES.POSTS.BASE, postRoutes);
 apiRouter.use(API_ROUTES.TAGS.BASE, tagRoutes);
 
 apiRouter.use(API_ROUTES.CV.BASE, cvRoutes);
+
+apiRouter.use(API_ROUTES.CONTACT.BASE, contactRoutes);
 
 export default apiRouter;

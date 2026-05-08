@@ -31,6 +31,9 @@ export const API_ROUTES = {
     CV: {
         BASE: "/cv",
     },
+    CONTACT: {
+        BASE: "/contact",
+    },
 };
 
 export const POSTS_PER_PAGE = 20;

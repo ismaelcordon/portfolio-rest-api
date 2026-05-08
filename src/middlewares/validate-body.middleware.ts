@@ -12,10 +12,7 @@ export const validateBody = (
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-        const message = errors
-            .array()
-            .map((e) => e.msg)
-            .join("; ");
+        const message = errors.array()[0]?.msg || "Validation error";
 
         return sendError(
             res,

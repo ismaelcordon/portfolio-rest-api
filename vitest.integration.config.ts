@@ -31,6 +31,8 @@ export default defineConfig({
             DB_PASSWORD: process.env.DB_PASSWORD || "postgres",
             NODE_ENV: "test",
             API_KEY: process.env.API_KEY || "test-api-key",
+            CONTACT_TO: "contact@ismaelcordon.com",
+            CONTACT_FROM: "noreply@ismaelcordon.com",
         },
         coverage: {
             provider: "v8",

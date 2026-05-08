@@ -7,6 +7,7 @@ import {
     createTagDTO,
     currentDatePlus3Hours,
     postModelArray,
+    updatePostRequestDto,
 } from "../fixtures/post.fixtures";
 import { PostModel } from "#models/sequelize/post.sequelize.js";
 import { TagModel } from "#models/sequelize/post-tag.sequelize.js";
@@ -20,6 +21,7 @@ const hidePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES
 const deletePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
 const publishPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.PUBLISH_BY_ID}`;
 const schedulePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.SCHEDULE_BY_ID}`;
+const updatePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.UPDATE_BY_ID}`;
 
 describe("Posts", () => {
     describe("Find all posts", () => {
@@ -705,6 +707,307 @@ describe("Posts", () => {
             expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
             expect(postDB?.status).toBe(PostStatus.SCHEDULED);
             expect(postDB?.scheduledAt).not.toBeNull();
+        });
+    });
+
+    describe("UpdatePost", async () => {
+        it("Should return 400 when title is not provided", async () => {
+            // Arrange
+            const app = createApp();
+
+            const invalidBody = {
+                ...updatePostRequestDto,
+                title: undefined,
+            };
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "1"))
+                    .send(invalidBody),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should return 400 when description is not provided", async () => {
+            // Arrange
+            const app = createApp();
+
+            const invalidBody = {
+                ...updatePostRequestDto,
+                description: undefined,
+            };
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "1"))
+                    .send(invalidBody),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should return 400 when content is not provided", async () => {
+            // Arrange
+            const app = createApp();
+
+            const invalidBody = {
+                ...updatePostRequestDto,
+                content: undefined,
+            };
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "1"))
+                    .send(invalidBody),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should return 400 when reading_time is not provided", async () => {
+            // Arrange
+            const app = createApp();
+
+            const invalidBody = {
+                ...updatePostRequestDto,
+                reading_time: undefined,
+            };
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "1"))
+                    .send(invalidBody),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should return 400 when tag_id is not provided", async () => {
+            // Arrange
+            const app = createApp();
+
+            const invalidBody = {
+                ...updatePostRequestDto,
+                tag_id: undefined,
+            };
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "1"))
+                    .send(invalidBody),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should return 400 when reading_time is invalid", async () => {
+            // Arrange
+            const app = createApp();
+
+            const invalidBody = {
+                ...updatePostRequestDto,
+                reading_time: -1,
+            };
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "1"))
+                    .send(invalidBody),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should return 400 when tag_id is invalid", async () => {
+            // Arrange
+            const app = createApp();
+
+            const invalidBody = {
+                ...updatePostRequestDto,
+                tag_id: -1,
+            };
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "1"))
+                    .send(invalidBody),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should update a post successfully", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const scheduledAt = new Date("2026-05-01T12:00:00+02:00");
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.SCHEDULED,
+                tagId: 1,
+                scheduledAt,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(
+                        updatePostEndpoint.replace(
+                            ":id",
+                            String(createdPost.postId),
+                        ),
+                    )
+                    .send(updatePostRequestDto),
+            );
+
+            const postDB = await PostModel.findByPk(createdPost.postId);
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
+            expect(postDB?.title).toBe(updatePostRequestDto.title);
+            expect(postDB?.description).toBe(updatePostRequestDto.description);
+            expect(postDB?.content).toBe(updatePostRequestDto.content);
+            expect(postDB?.readingTime).toBe(updatePostRequestDto.reading_time);
+            expect(postDB?.tagId).toBe(updatePostRequestDto.tag_id);
+            expect(postDB?.status).toBe(PostStatus.SCHEDULED);
+            expect(postDB?.scheduledAt).not.toBeNull();
+        });
+
+        it("Should return 401 if api key is not provided", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const scheduledAt = new Date("2026-05-01T12:00:00+02:00");
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.SCHEDULED,
+                tagId: 1,
+                scheduledAt,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app)
+                .put(
+                    updatePostEndpoint.replace(
+                        ":id",
+                        String(createdPost.postId),
+                    ),
+                )
+                .send(updatePostRequestDto);
+            const postDB = await PostModel.findByPk(createdPost.postId);
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.UNAUTHORIZED);
+        });
+
+        it("Should return 409 when post is already published", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.PUBLISHED,
+                tagId: 1,
+                publishedAt: new Date(),
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(
+                        updatePostEndpoint.replace(
+                            ":id",
+                            String(createdPost.postId),
+                        ),
+                    )
+                    .send(updatePostRequestDto),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.CONFLICT);
+        });
+
+        it("Should return 404 when provided post does not exists in database", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "999"))
+                    .send(updatePostRequestDto),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
+        });
+
+        it("Should return 404 when provided post tag id does not exists in database", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const createdPost = await PostModel.create({
+                title: createPostDto.title,
+                description: createPostDto.description,
+                content: createPostDto.content,
+                readingTime: createPostDto.reading_time,
+                status: PostStatus.DRAFT,
+                tagId: 1,
+            });
+
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(
+                        updatePostEndpoint.replace(
+                            ":id",
+                            String(createdPost.postId),
+                        ),
+                    )
+                    .send({
+                        ...updatePostRequestDto,
+                        tag_id: 999,
+                    }),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
         });
     });
 });

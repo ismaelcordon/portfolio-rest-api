@@ -6,14 +6,16 @@ import {
     hidePost,
     publishPost,
     schedulePost,
+    updatePost,
 } from "#controllers/posts.controller.js";
 import { NotFoundException } from "#exceptions/not-found.exception.js";
-import { sendError, sendSuccess } from "#helpers/response.helper.js";
+import { sendSuccess, sendError } from "#helpers/response.helper.js";
 import {
     destroyPost,
     findAllPosts,
     findPostById,
     insertNewPost,
+    updatePostEditableFields,
     updatePostToHidden,
     updatePostToPublished,
     updatePostToScheduled,
@@ -26,6 +28,7 @@ import {
     mockCreatePostDto,
     mockPaginatedPostsDto,
     mockPostDto,
+    updatePostDto,
 } from "../../fixtures/post.fixtures";
 import { ConflictException } from "#exceptions/conflict.exception.js";
 import { emptyMockPost } from "../../fixtures/post.fixtures";
@@ -38,6 +41,7 @@ vi.mock("#services/posts.service.js", () => ({
     destroyPost: vi.fn(),
     updatePostToPublished: vi.fn(),
     updatePostToScheduled: vi.fn(),
+    updatePostEditableFields: vi.fn(),
 }));
 
 vi.mock("#helpers/response.helper.js", () => ({
@@ -642,6 +646,117 @@ describe("post.controller", () => {
             await schedulePost(req, res);
 
             // Assert
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                "Unexpected error",
+                "UNKNOWN_ERROR",
+            );
+        });
+    });
+
+    describe("UpdatePost", async () => {
+        it("Should return Not Found exception response when service does not found post in database", async () => {
+            // Arrange
+            req.params = { id: "999" };
+            req.body = updatePostDto;
+
+            const notFoundException = new NotFoundException(
+                "Post with id 999 not found",
+            );
+
+            vi.mocked(updatePostEditableFields).mockRejectedValue(
+                notFoundException,
+            );
+
+            // Act
+            await updatePost(req, res);
+
+            // Assert
+            expect(updatePostEditableFields).toHaveBeenCalledWith(
+                999,
+                updatePostDto,
+            );
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                notFoundException.message,
+                notFoundException.code,
+                null,
+                notFoundException.statusCode,
+            );
+        });
+
+        it("Should return Conflict exception response when service find an already published post", async () => {
+            // Arrange
+            req.params = { id: "1" };
+            req.body = updatePostDto;
+
+            const conflictException = new ConflictException(
+                "Post with id 1 cannot be updated because it is already published",
+            );
+
+            vi.mocked(updatePostEditableFields).mockRejectedValue(
+                conflictException,
+            );
+
+            // Act
+            await updatePost(req, res);
+
+            // Assert
+            expect(updatePostEditableFields).toHaveBeenCalledWith(
+                1,
+                updatePostDto,
+            );
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                conflictException.message,
+                conflictException.code,
+                null,
+                conflictException.statusCode,
+            );
+        });
+
+        it("Should update post successfully", async () => {
+            // Arrange
+            req.params = { id: "1" };
+            req.body = updatePostDto;
+
+            vi.mocked(updatePostEditableFields).mockResolvedValue(undefined);
+
+            // Act
+            await updatePost(req, res);
+
+            // Assert
+            expect(updatePostEditableFields).toHaveBeenCalledWith(
+                1,
+                updatePostDto,
+            );
+            expect(sendSuccess).toHaveBeenCalledWith(
+                res,
+                "Post successfully updated",
+            );
+            expect(sendError).not.toHaveBeenCalled();
+        });
+
+        it("Should return internal server error response when service throws unexpected error", async () => {
+            // Arrange
+            req.params = { id: "1" };
+            req.body = updatePostDto;
+
+            vi.mocked(updatePostEditableFields).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            await updatePost(req, res);
+
+            // Assert
+            expect(updatePostEditableFields).toHaveBeenCalledWith(
+                1,
+                updatePostDto,
+            );
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,

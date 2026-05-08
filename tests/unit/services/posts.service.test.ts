@@ -5,6 +5,7 @@ import {
     findAllPosts,
     findPostById,
     insertNewPost,
+    updatePostEditableFields,
     updatePostToHidden,
     updatePostToPublished,
     updatePostToScheduled,
@@ -16,7 +17,6 @@ import {
 import { NotFoundException } from "#exceptions/not-found.exception.js";
 import { InternalServerException } from "#exceptions/internal-server.exception.js";
 import {
-    mockCreatePostDto,
     mockHiddenPost,
     mockPaginatedPostsDto,
     mockPost,
@@ -28,6 +28,7 @@ import {
     mockScheduledPost,
     emptyPostDto,
     emptyMockPost,
+    updatePostDto,
 } from "../../fixtures/post.fixtures.js";
 import { mockTag } from "../../fixtures/post-tags.fixtures.js";
 import { Op } from "sequelize";
@@ -704,6 +705,103 @@ describe("post.service", () => {
             // Assert
             await expect(result).rejects.toThrow(InternalServerException);
             await expect(result).rejects.toThrow("Database crashed");
+        });
+    });
+
+    describe("updatePostEditableFields", async () => {
+        it("Should update post succesfully", async () => {
+            // Arrange
+            const mockPostWithUpdate = {
+                ...mockPost,
+                update: vi.fn().mockResolvedValue(undefined),
+            };
+
+            vi.mocked(PostModel.findByPk).mockResolvedValue(
+                mockPostWithUpdate as any,
+            );
+            vi.mocked(checkPostTagById).mockResolvedValue(mockTag);
+
+            // Act
+            await updatePostEditableFields(mockPost.postId, updatePostDto);
+
+            // Assert
+            expect(PostModel.findByPk).toHaveBeenCalledWith(mockPost.postId);
+            expect(checkPostTagById).toHaveBeenCalledWith(updatePostDto.tagId);
+            expect(mockPostWithUpdate.update).toHaveBeenCalledWith({
+                title: updatePostDto.title,
+                description: updatePostDto.description,
+                content: updatePostDto.content,
+                readingTime: updatePostDto.readingTime,
+                tagId: updatePostDto.tagId,
+            });
+        });
+
+        it("Should throw NotFoundException when post does not exists in database", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(null);
+
+            // Act
+            const result = updatePostEditableFields(999, updatePostDto);
+
+            // Assert
+            await expect(result).rejects.toThrow(NotFoundException);
+            await expect(result).rejects.toThrow("Post with id 999 not found");
+            expect(checkPostTagById).not.toHaveBeenCalled();
+        });
+
+        it("Should throw ConflictException when post is already published", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(mockPublishedPost);
+
+            // Act
+            const result = updatePostEditableFields(
+                mockPublishedPost.postId,
+                updatePostDto,
+            );
+
+            // Assert
+            await expect(result).rejects.toThrow(ConflictException);
+            await expect(result).rejects.toThrow(
+                `Post with id ${mockPublishedPost.postId} cannot be updated because it is already published`,
+            );
+            expect(checkPostTagById).not.toHaveBeenCalled();
+        });
+
+        it("Should throw NotFoundException when tag does not exist", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockResolvedValue(mockPost);
+            vi.mocked(checkPostTagById).mockRejectedValue(
+                new NotFoundException(
+                    `Post tag with id: ${updatePostDto.tagId}, not found.`,
+                ),
+            );
+
+            // Act
+            const result = updatePostEditableFields(
+                mockPost.postId,
+                updatePostDto,
+            );
+
+            // Assert
+            await expect(result).rejects.toThrow(NotFoundException);
+            await expect(result).rejects.toThrow(
+                `Post tag with id: ${updatePostDto.tagId}, not found.`,
+            );
+        });
+
+        it("Should throw InternalServerException when an unexpected error occurs", async () => {
+            // Arrange
+            vi.mocked(PostModel.findByPk).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+
+            // Act
+            const result = updatePostEditableFields(1, updatePostDto);
+
+            // Assert
+            await expect(result).rejects.toThrow(InternalServerException);
+            await expect(result).rejects.toThrow("Database crashed");
+            expect(checkPostTagById).not.toHaveBeenCalled();
         });
     });
 });

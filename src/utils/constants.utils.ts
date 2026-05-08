@@ -23,6 +23,7 @@ export const API_ROUTES = {
         PUBLISH_BY_ID: "/:id/publish",
         SCHEDULE_BY_ID: "/:id/schedule",
         SCHEDULED_DUE: "/scheduled/due",
+        UPDATE_BY_ID: "/:id/update",
     },
     TAGS: {
         BASE: "/tags",

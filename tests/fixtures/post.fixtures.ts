@@ -164,3 +164,19 @@ export const mockScheduledPost = {
 export const currentDatePlus3Hours = new Date(
     new Date().getTime() + 3 * 60 * 60 * 1000,
 ).toISOString();
+
+export const updatePostDto = {
+    title: "Updated post title",
+    description: "Updated post description",
+    content: "Updated post content",
+    readingTime: 8,
+    tagId: 1,
+} as any;
+
+export const updatePostRequestDto = {
+    title: "Updated post title",
+    description: "Updated post description",
+    content: "Updated post content",
+    reading_time: 8,
+    tag_id: 1,
+};

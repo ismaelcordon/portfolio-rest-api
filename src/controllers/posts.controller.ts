@@ -12,6 +12,8 @@ import {
     updatePostToScheduled,
 } from "#services/posts.service.js";
 import { HTTP_STATUSES } from "#utils/constants.utils";
+import { updatePostEditableFields } from "../services/posts.service";
+import { UpdatePostRequestDto } from "../dtos/UpdatePostRequest.dto";
 
 export const createPost = async (req: Request, res: Response) => {
     try {
@@ -181,6 +183,28 @@ export const getScheduledPosts = async (req: Request, res: Response) => {
             "Scheduled posts retrieved successfully",
             postIds,
         );
+    } catch (error) {
+        if (error instanceof CustomException) {
+            return sendError(
+                res,
+                error.message,
+                error.code,
+                null,
+                error.statusCode,
+            );
+        }
+        return sendError(res, "Unexpected error", "UNKNOWN_ERROR");
+    }
+};
+
+export const updatePost = async (req: Request, res: Response) => {
+    try {
+        const postId = parseInt(req.params.id as string);
+        const updatePostRequestDto = req.body as UpdatePostRequestDto;
+
+        await updatePostEditableFields(postId, updatePostRequestDto);
+
+        return sendSuccess(res, "Post successfully updated");
     } catch (error) {
         if (error instanceof CustomException) {
             return sendError(

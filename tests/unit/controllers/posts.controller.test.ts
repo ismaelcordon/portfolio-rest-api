@@ -29,13 +29,9 @@ import {
     mockPaginatedPostsDto,
     mockPostDto,
     mockPublishedPost,
-    mockScheduledPost,
-    mockScheduledPostDto,
     updatePostDto,
 } from "../../fixtures/post.fixtures";
 import { ConflictException } from "#exceptions/conflict.exception.js";
-import { emptyMockPost } from "../../fixtures/post.fixtures";
-import { PostStatus } from "#types/post.types";
 
 vi.mock("#services/posts.service.js", () => ({
     insertNewPost: vi.fn(),

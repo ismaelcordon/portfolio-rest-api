@@ -154,10 +154,19 @@ export const postModelArray = () => [
         tagId: 1,
     }),
 ];
+
 export const mockPublishedPost = {
-    ...mockPost,
+    postId: 1,
+    title: "Mi primer post",
+    description: "Descripción del post",
+    content: "Contenido del post",
+    readingTime: 5,
     status: PostStatus.PUBLISHED,
+    scheduledAt: null,
     publishedAt: new Date("2026-04-21T10:00:00Z"),
+    tagId: 1,
+    createdAt: new Date("2026-04-21T10:00:00Z"),
+    updatedAt: new Date("2026-04-21T10:00:00Z"),
 } as any;
 
 export const mockScheduledPost = {

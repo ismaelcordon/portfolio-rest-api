@@ -1,4 +1,3 @@
-import { InternalServerException } from "#exceptions/internal-server.exception.js";
 import { PostModel } from "#models/sequelize/post.sequelize";
 import { PostStatus } from "#types/post.types";
 import { POSTS_PER_PAGE } from "#utils/constants.utils";
@@ -178,9 +177,6 @@ export const updatePostToScheduled = async (
     scheduledAt: string,
 ) => {
     try {
-        console.log(`scheduledAt received: ${scheduledAt}`);
-        console.log(`new date: ${new Date(scheduledAt)}`);
-
         const post = await PostModel.findByPk(postId);
 
         if (!post) {
@@ -230,12 +226,6 @@ export const updatePostEditableFields = async (
 
         if (!post) {
             throw new NotFoundException(`Post with id ${postId} not found`);
-        }
-
-        if (post.status === PostStatus.PUBLISHED) {
-            throw new ConflictException(
-                `Post with id ${postId} cannot be updated because it is already published`,
-            );
         }
 
         await checkPostTagById(updatePostRequestDto.tagId);

@@ -1,5 +1,3 @@
-import { CustomException } from "#exceptions/custom.exception.js";
-import { InternalServerException } from "#exceptions/internal-server.exception.js";
 import { NotFoundException } from "#exceptions/not-found.exception.js";
 import path from "node:path";
 import fs from "node:fs";

@@ -232,8 +232,11 @@ export const updatePostEditableFields = async (
 
         await post.update({
             title: updatePostRequestDto.title,
+            titleEs: updatePostRequestDto.titleEs,
             description: updatePostRequestDto.description,
+            descriptionEs: updatePostRequestDto.descriptionEs,
             content: updatePostRequestDto.content,
+            contentEs: updatePostRequestDto.contentEs,
             readingTime: updatePostRequestDto.readingTime,
             tagId: updatePostRequestDto.tagId,
         });

@@ -778,6 +778,26 @@ describe("Posts", () => {
             expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
         });
 
+        it("Should return 400 when title_es is not provided", async () => {
+            // Arrange
+            const app = createApp();
+
+            const invalidBody = {
+                ...updatePostRequestDto,
+                title_es: undefined,
+            };
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "1"))
+                    .send(invalidBody),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
         it("Should return 400 when description is not provided", async () => {
             // Arrange
             const app = createApp();
@@ -798,6 +818,26 @@ describe("Posts", () => {
             expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
         });
 
+        it("Should return 400 when description_es is not provided", async () => {
+            // Arrange
+            const app = createApp();
+
+            const invalidBody = {
+                ...updatePostRequestDto,
+                description_es: undefined,
+            };
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "1"))
+                    .send(invalidBody),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
         it("Should return 400 when content is not provided", async () => {
             // Arrange
             const app = createApp();
@@ -805,6 +845,26 @@ describe("Posts", () => {
             const invalidBody = {
                 ...updatePostRequestDto,
                 content: undefined,
+            };
+
+            // Act
+            const response = await withApiKey(
+                request(app)
+                    .put(updatePostEndpoint.replace(":id", "1"))
+                    .send(invalidBody),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.BAD_REQUEST);
+        });
+
+        it("Should return 400 when content_es is not provided", async () => {
+            // Arrange
+            const app = createApp();
+
+            const invalidBody = {
+                ...updatePostRequestDto,
+                content_es: undefined,
             };
 
             // Act
@@ -906,8 +966,11 @@ describe("Posts", () => {
 
             const createdPost = await PostModel.create({
                 title: createPostDto.title,
+                titleEs: createPostDto.title_es,
                 description: createPostDto.description,
+                descriptionEs: createPostDto.description_es,
                 content: createPostDto.content,
+                contentEs: createPostDto.content_es,
                 readingTime: createPostDto.reading_time,
                 status: PostStatus.SCHEDULED,
                 tagId: 1,
@@ -949,8 +1012,11 @@ describe("Posts", () => {
 
             const createdPost = await PostModel.create({
                 title: createPostDto.title,
+                titleEs: createPostDto.title_es,
                 description: createPostDto.description,
+                descriptionEs: createPostDto.description_es,
                 content: createPostDto.content,
+                contentEs: createPostDto.content_es,
                 readingTime: createPostDto.reading_time,
                 status: PostStatus.SCHEDULED,
                 tagId: 1,

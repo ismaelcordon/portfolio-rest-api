@@ -87,9 +87,12 @@ export const mockCreatePostDto = {
 };
 
 export const createPostDto = {
-    title: "Mi primer post",
-    description: "Descripción del post",
-    content: "Contenido del post",
+    title: "My first post",
+    title_es: "Mi primer post",
+    description: "Post description",
+    description_es: "Descripción del post",
+    content: "Post content in english",
+    content_es: "Contenido del post",
     reading_time: 5,
     tag_id: 1,
 };
@@ -194,8 +197,11 @@ export const updatePostDto = {
 
 export const updatePostRequestDto = {
     title: "Updated post title",
+    title_es: "Título del post actualizado",
     description: "Updated post description",
+    description_es: "Descripcion del post actualizada",
     content: "Updated post content",
+    content_es: "Contenido del post actualizado",
     reading_time: 8,
     tag_id: 1,
 };

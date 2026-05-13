@@ -1,10 +1,14 @@
 import { PostStatus } from "#types/post.types";
 
-export class CreatePostResponseDto {
+export class PostDto {
     postId!: number;
     title!: string;
+    titleEs!: string | null;
     description!: string | null;
+    descriptionEs!: string | null;
     content!: string | null;
+    contentEs!: string | null;
+    slug!: string | null;
     readingTime!: number;
     status!: PostStatus;
     scheduledAt!: Date | null;

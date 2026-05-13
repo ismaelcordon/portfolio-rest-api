@@ -15,20 +15,19 @@ export class PostModel extends Model<
     InferCreationAttributes<PostModel>
 > {
     declare postId: CreationOptional<number>;
-
     declare title: string;
+    declare titleEs: CreationOptional<string | null>;
     declare description: CreationOptional<string | null>;
+    declare descriptionEs: CreationOptional<string | null>;
     declare content: CreationOptional<string | null>;
+    declare contentEs: CreationOptional<string | null>;
     declare readingTime: number;
-
     declare status: PostStatus;
-
     declare scheduledAt: CreationOptional<Date | null>;
     declare publishedAt: CreationOptional<Date | null>;
-
     declare createdAt: CreationOptional<Date>;
     declare updatedAt: CreationOptional<Date>;
-
+    declare slug: CreationOptional<string | null>;
     declare tagId: ForeignKey<TagModel["tagId"]>;
 }
 
@@ -45,15 +44,30 @@ PostModel.init(
             allowNull: false,
             field: "title",
         },
+        titleEs: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            field: "title_es",
+        },
         description: {
             type: DataTypes.STRING,
             allowNull: true,
             field: "description",
         },
+        descriptionEs: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            field: "description_es",
+        },
         content: {
             type: DataTypes.STRING,
             allowNull: true,
             field: "content",
+        },
+        contentEs: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            field: "content_es",
         },
         readingTime: {
             type: DataTypes.INTEGER,
@@ -75,11 +89,6 @@ PostModel.init(
             allowNull: true,
             field: "published_at",
         },
-        tagId: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            field: "tag_id",
-        },
         createdAt: {
             type: DataTypes.DATE,
             allowNull: false,
@@ -91,6 +100,16 @@ PostModel.init(
             allowNull: false,
             defaultValue: DataTypes.NOW,
             field: "updated_at",
+        },
+        slug: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            field: "slug",
+        },
+        tagId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            field: "tag_id",
         },
     },
     {

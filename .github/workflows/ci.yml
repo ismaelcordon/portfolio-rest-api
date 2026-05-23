@@ -11,16 +11,16 @@ jobs:
         runs-on: self-hosted
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Install dependencies
-              run: npm ci
+              run: pnpm install --frozen-lockfile
 
             - name: Copy local .env.test
               run: cp /Users/icdominguez/deployments/portfolio_rest_api/shared/.env.test .env.test
 
             - name: Run unit tests with coverage
-              run: npm run test:coverage
+              run: pnpm test:coverage
 
             - name: Run integration tests
-              run: npm run test:integration
+              run: pnpm test:integration

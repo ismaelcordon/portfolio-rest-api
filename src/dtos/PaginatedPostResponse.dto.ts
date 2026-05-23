@@ -1,7 +1,5 @@
-import { PostDto } from "./Post.dto";
-
-export type PaginatedPostResponseDto = {
-    data: PostDto[];
+export type PaginatedPostResponseDto<T> = {
+    data: T[];
     meta: {
         total: number;
         page: number;

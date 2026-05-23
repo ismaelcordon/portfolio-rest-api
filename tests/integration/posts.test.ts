@@ -17,6 +17,7 @@ import { emptyPostDto } from "../fixtures/post.fixtures";
 
 const createNewPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}`;
 const findPostByIdEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
+const findPostBySlugEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_SLUG}`;
 const changeVisibilityEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.CHANGE_VISIBILITY_BY_ID}`;
 const deletePostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;
 const publishPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.PUBLISH_BY_ID}`;
@@ -52,9 +53,6 @@ describe("Posts", () => {
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
             expect(response.body.data.data).toHaveLength(2);
-            response.body.data.data.forEach((post: { status: string }) => {
-                expect(post.status).toBe(PostStatus.PUBLISHED);
-            });
             expect(response.body.data.meta.total_pages).toBe(1);
             expect(response.body.data.meta.has_next_page).toBe(false);
             expect(response.body.data.meta.has_prev_page).toBe(false);
@@ -205,22 +203,7 @@ describe("Posts", () => {
     });
 
     describe("Find post by id", () => {
-        it("Return 404 if post id does not exist", async () => {
-            // Arrange
-            await TagModel.create(createTagDTO);
-
-            const app = createApp();
-
-            // Act
-            const response = await request(app).get(
-                findPostByIdEndpoint.replace(":id", String(999)),
-            );
-
-            // Assert
-            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
-        });
-
-        it("Returns post successfully when post status is not published and api key is provided", async () => {
+        it("Returns post successfully", async () => {
             // Arrange
             await TagModel.create(createTagDTO);
 
@@ -250,7 +233,41 @@ describe("Posts", () => {
             expect(response.body.data.post_id).toBe(createdPost.postId);
         });
 
-        it("Returns post successfully when post status is published and api key is not provided", async () => {
+        it("Return 401 if api key is not provided", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const app = createApp();
+
+            // Act
+            const response = await request(app).get(
+                findPostByIdEndpoint.replace(":id", String(999)),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.UNAUTHORIZED);
+        });
+
+        it("Return 404 if post id does not exist", async () => {
+            // Arrange
+            await TagModel.create(createTagDTO);
+
+            const app = createApp();
+
+            // Act
+            const response = await withApiKey(
+                request(app).get(
+                    findPostByIdEndpoint.replace(":id", String(999)),
+                ),
+            );
+
+            // Assert
+            expect(response.status).toBe(HTTP_STATUSES.NOT_FOUND);
+        });
+    });
+
+    describe("Find post by slug", () => {
+        it("Returns post successfully if slug exists", async () => {
             // Arrange
             await TagModel.create(createTagDTO);
 
@@ -260,6 +277,7 @@ describe("Posts", () => {
                 content: createPostDto.content,
                 readingTime: createPostDto.reading_time,
                 status: PostStatus.PUBLISHED,
+                slug: "without-title",
                 tagId: 1,
             });
 
@@ -267,32 +285,26 @@ describe("Posts", () => {
 
             // Act
             const response = await request(app).get(
-                findPostByIdEndpoint.replace(":id", String(createdPost.postId)),
+                findPostBySlugEndpoint.replace(
+                    ":slug",
+                    String(createdPost.slug),
+                ),
             );
 
             // Assert
             expect(response.status).toBe(HTTP_STATUSES.SUCCESS);
-            expect(response.body.data.post_id).toBe(createdPost.postId);
+            expect(response.body.data.slug).toBe(createdPost.slug);
         });
 
-        it("Returns 404 when post status is not published and api key is not provided", async () => {
+        it("Return 404 if post slug does not exist", async () => {
             // Arrange
             await TagModel.create(createTagDTO);
-
-            const createdPost = await PostModel.create({
-                title: createPostDto.title,
-                description: createPostDto.description,
-                content: createPostDto.content,
-                readingTime: createPostDto.reading_time,
-                status: PostStatus.DRAFT,
-                tagId: 1,
-            });
 
             const app = createApp();
 
             // Act
             const response = await request(app).get(
-                findPostByIdEndpoint.replace(":id", String(createdPost.postId)),
+                findPostBySlugEndpoint.replace(":id", "XXXXXX"),
             );
 
             // Assert

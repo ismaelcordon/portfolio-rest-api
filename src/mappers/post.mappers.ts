@@ -30,11 +30,11 @@ export const toPostResponseDto = (
         : null,
 });
 
-export const toPaginatedPostsResponseDto = (
-    posts: PostDto[],
+export const toPaginatedPostsResponseDto = <T>(
+    posts: T[],
     total: number,
     page: number,
-): PaginatedPostResponseDto => {
+): PaginatedPostResponseDto<T> => {
     const totalPages = Math.ceil(total / POSTS_PER_PAGE);
 
     return {

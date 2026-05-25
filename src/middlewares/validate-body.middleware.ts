@@ -2,7 +2,7 @@ import { sendError } from "#helpers/response.helper.js";
 import { HTTP_STATUSES } from "#utils/constants.utils.js";
 
 import { NextFunction, Request, Response } from "express";
-import { validationResult } from "express-validator/lib/validation-result";
+import { validationResult } from "express-validator/lib/validation-result.js";
 
 export const validateBody = (
     req: Request,

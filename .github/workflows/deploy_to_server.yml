@@ -16,7 +16,7 @@ jobs:
         runs-on: self-hosted
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Log - Starting deployment
               run: |
@@ -48,7 +48,7 @@ jobs:
                   echo "Copying dist, package.json and .env..."
                   rsync -av $GITHUB_WORKSPACE/dist/ $DEPLOY_PATH/app/dist/
                   cp $GITHUB_WORKSPACE/package.json $DEPLOY_PATH/app/package.json
-                  cp $GITHUB_WORKSPACE/package-lock.json $DEPLOY_PATH/app/package-lock.json
+                  cp $GITHUB_WORKSPACE/pnpm-lock.yaml $DEPLOY_PATH/app/pnpm-lock.yaml
                   echo "Files copied!"
 
             - name: Generate .env

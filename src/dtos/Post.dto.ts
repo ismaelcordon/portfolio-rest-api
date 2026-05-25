@@ -1,4 +1,4 @@
-import { PostStatus } from "#types/post.types";
+import { PostStatus } from "#types/post.types.js";
 
 export class PostDto {
     postId!: number;

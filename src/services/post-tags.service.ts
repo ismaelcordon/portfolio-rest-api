@@ -1,6 +1,6 @@
 import { toTagDto } from "#mappers/tag.mapper.js";
-import { TagModel } from "#models/sequelize/post-tag.sequelize";
-import { NotFoundException } from "#exceptions/not-found.exception";
+import { TagModel } from "#models/sequelize/post-tag.sequelize.js";
+import { NotFoundException } from "#exceptions/not-found.exception.js";
 import { handleServiceError } from "#helpers/error.helper.js";
 
 export const findAllTags = async () => {

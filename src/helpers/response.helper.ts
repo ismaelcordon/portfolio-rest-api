@@ -1,5 +1,9 @@
 import { Response } from "express";
-import { ApiErrorCode, ErrorResponse, SuccessResponse } from "#types/api.types";
+import {
+    ApiErrorCode,
+    ErrorResponse,
+    SuccessResponse,
+} from "#types/api.types.js";
 import { HTTP_STATUSES } from "#utils/constants.utils.js";
 
 export const sendSuccess = <T = null>(

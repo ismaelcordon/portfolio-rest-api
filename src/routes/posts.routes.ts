@@ -15,10 +15,10 @@ import { updatePostValidator } from "#validators/create-post-validator.js";
 import { camelCaseMiddleware } from "#middlewares/camel-case.middleware.js";
 import { API_ROUTES } from "#utils/constants.utils.js";
 import { getPostValidator } from "#validators/get-post-validator.js";
-import { getAllPostsValidator } from "#validators/get-all-posts-validator";
-import { deletePost } from "../controllers/posts.controller";
+import { getAllPostsValidator } from "#validators/get-all-posts-validator.js";
+import { deletePost } from "../controllers/posts.controller.js";
 import { apiKeyMiddleware } from "#middlewares/api-key.middleware.js";
-import { schedulePostValidator } from "#validators/schedule-post.validator";
+import { schedulePostValidator } from "#validators/schedule-post.validator.js";
 
 const router = Router();
 

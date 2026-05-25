@@ -8,7 +8,7 @@ import {
 } from "sequelize";
 import { sequelize } from "#config/database.config.js";
 import { TagModel } from "#models/sequelize/post-tag.sequelize.js";
-import { PostStatus } from "#types/post.types";
+import { PostStatus } from "#types/post.types.js";
 
 export class PostModel extends Model<
     InferAttributes<PostModel>,

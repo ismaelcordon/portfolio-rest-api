@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { sendError, sendSuccess } from "#helpers/response.helper.js";
-import { CustomException } from "../exceptions/custom.exception";
+import { CustomException } from "#exceptions/custom.exception.js";
 import {
     destroyPost,
     findAllPosts,
@@ -12,9 +12,9 @@ import {
     updatePostToScheduled,
     findPostBySlug,
 } from "#services/posts.service.js";
-import { HTTP_STATUSES } from "#utils/constants.utils";
-import { updatePostEditableFieldsAndOptionallyPublish } from "../services/posts.service";
-import { UpdatePostRequestDto } from "../dtos/UpdatePostRequest.dto";
+import { HTTP_STATUSES } from "#utils/constants.utils.js";
+import { updatePostEditableFieldsAndOptionallyPublish } from "#services/posts.service.js";
+import { UpdatePostRequestDto } from "#dtos/UpdatePostRequest.dto.js";
 
 export const createPost = async (req: Request, res: Response) => {
     try {

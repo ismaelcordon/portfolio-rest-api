@@ -1,12 +1,19 @@
 import { PostModel } from "#models/sequelize/post.sequelize.js";
 import { PostStatus } from "#types/post.types.js";
+import { DEFAULT_POST_TITLE } from "#utils/constants.utils";
+
+const DEFAULT_POST_TITLE_SLUG = "without-title";
 
 export const emptyMockPost = {
     postId: 1,
-    title: "Sin título",
+    title: DEFAULT_POST_TITLE,
+    titleEs: "",
     description: "",
+    descriptionEs: "",
     content: "",
+    contentEs: "",
     readingTime: 1,
+    slug: "",
     status: PostStatus.DRAFT,
     scheduledAt: null,
     publishedAt: null,
@@ -17,14 +24,18 @@ export const emptyMockPost = {
 
 export const mockPost = {
     postId: 1,
-    title: "Mi primer post",
-    description: "Descripción del post",
-    content: "Contenido del post",
+    title: DEFAULT_POST_TITLE,
+    titleEs: "Sin título",
+    description: "Content description",
+    descriptionEs: "Descripción del post",
+    content: "Post content",
+    contentEs: "Contenido del post",
     readingTime: 5,
     status: PostStatus.DRAFT,
     scheduledAt: null,
     publishedAt: null,
     tagId: 1,
+    slug: null,
     createdAt: new Date("2026-04-21T10:00:00Z"),
     updatedAt: new Date("2026-04-21T10:00:00Z"),
 } as any;
@@ -32,17 +43,22 @@ export const mockPost = {
 export const publishedMockPost = {
     ...mockPost,
     status: PostStatus.PUBLISHED,
+    slug: DEFAULT_POST_TITLE_SLUG,
 } as any;
 
 export const emptyPostDto = {
     postId: 1,
-    title: "Sin título",
+    title: DEFAULT_POST_TITLE,
+    titleEs: "",
     description: "",
+    descriptionEs: "",
     content: "",
+    contentEs: "",
     readingTime: 1,
     status: PostStatus.DRAFT,
     scheduledAt: null,
     publishedAt: null,
+    slug: null,
     createdAt: new Date("2026-04-21T10:00:00Z"),
     updatedAt: new Date("2026-04-21T10:00:00Z"),
     tag: {
@@ -52,13 +68,17 @@ export const emptyPostDto = {
 };
 export const mockPostDto = {
     postId: 1,
-    title: "Mi primer post",
-    description: "Descripción del post",
-    content: "Contenido del post",
+    title: "My first post",
+    titleEs: "Mi primer post",
+    description: "Post description",
+    descriptionEs: "Descripción del post",
+    content: "Post content",
+    contentEs: "Contenido del post",
     readingTime: 5,
     status: PostStatus.DRAFT,
     scheduledAt: null,
     publishedAt: null,
+    slug: "my-first-post",
     createdAt: new Date("2026-04-21T10:00:00Z"),
     updatedAt: new Date("2026-04-21T10:00:00Z"),
     tag: {
@@ -189,9 +209,13 @@ export const mockDraftPost = {
 
 export const updatePostDto = {
     title: "Updated post title",
+    titleEs: "Título de post actualizado",
     description: "Updated post description",
+    descriptionEs: "Descripción de post actualizado",
     content: "Updated post content",
+    contentEs: "Contenido de post actualizado",
     readingTime: 8,
+    status: PostStatus.DRAFT,
     tagId: 1,
 } as any;
 
@@ -204,4 +228,14 @@ export const updatePostRequestDto = {
     content_es: "Contenido del post actualizado",
     reading_time: 8,
     tag_id: 1,
+};
+
+export const mockPublicPostDto = {
+    slug: "my-first-post",
+    title: "My first post",
+    description: "Post description",
+    content: "Post content",
+    readingTime: 5,
+    publishedAt: new Date("2026-04-21T10:00:00Z"),
+    tag: "TypeScript",
 };

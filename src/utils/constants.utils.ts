@@ -16,6 +16,7 @@ export const API_ROUTES = {
     POSTS: {
         BASE: "/posts",
         BY_ID: "/:id",
+        BY_SLUG: "/slug/:slug",
         PARAMS: {
             ID: "id",
         },
@@ -35,5 +36,7 @@ export const API_ROUTES = {
         BASE: "/contact",
     },
 };
+
+export const DEFAULT_POST_TITLE = "Without title";
 
 export const POSTS_PER_PAGE = 20;

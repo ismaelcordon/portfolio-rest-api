@@ -10,9 +10,10 @@ import {
     updatePostVisibility,
     updatePostToPublished,
     updatePostToScheduled,
+    findPostBySlug,
 } from "#services/posts.service.js";
 import { HTTP_STATUSES } from "#utils/constants.utils";
-import { updatePostEditableFields } from "../services/posts.service";
+import { updatePostEditableFieldsAndOptionallyPublish } from "../services/posts.service";
 import { UpdatePostRequestDto } from "../dtos/UpdatePostRequest.dto";
 
 export const createPost = async (req: Request, res: Response) => {
@@ -44,7 +45,31 @@ export const getPostById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const post = await findPostById(Number(id), res.locals.isAdmin);
+        const post = await findPostById(Number(id));
+
+        sendSuccess(res, "Post successfully retrieved", post);
+    } catch (error) {
+        console.log(`RETORNANDO ERROR EN EL CONTROLLER`);
+        if (error instanceof CustomException) {
+            return sendError(
+                res,
+                error.message,
+                error.code,
+                null,
+                error.statusCode,
+            );
+        }
+
+        return sendError(res, "Unexpected error", "UNKNOWN_ERROR");
+    }
+};
+
+export const getPostBySlug = async (req: Request, res: Response) => {
+    try {
+        const { slug } = req.params;
+        const language = req.query.language === "es" ? "es" : "en";
+
+        const post = await findPostBySlug(String(slug), language);
 
         sendSuccess(res, "Post successfully retrieved", post);
     } catch (error) {
@@ -69,9 +94,11 @@ export const getAllPosts = async (req: Request, res: Response) => {
             ? parseInt(req.query.tag_id as string)
             : undefined;
         const search = req.query.search ? String(req.query.search) : undefined;
+        const language = req.query.language === "es" ? "es" : "en";
 
         const result = await findAllPosts(
             page,
+            language,
             tagId,
             search,
             res.locals.isAdmin,
@@ -201,8 +228,13 @@ export const updatePost = async (req: Request, res: Response) => {
     try {
         const postId = parseInt(req.params.id as string);
         const updatePostRequestDto = req.body as UpdatePostRequestDto;
+        const publishNow = req.query.publish === "true";
 
-        await updatePostEditableFields(postId, updatePostRequestDto);
+        await updatePostEditableFieldsAndOptionallyPublish(
+            postId,
+            updatePostRequestDto,
+            publishNow,
+        );
 
         return sendSuccess(res, "Post successfully updated");
     } catch (error) {

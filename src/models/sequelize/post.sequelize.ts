@@ -60,12 +60,12 @@ PostModel.init(
             field: "description_es",
         },
         content: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT,
             allowNull: true,
             field: "content",
         },
         contentEs: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT,
             allowNull: true,
             field: "content_es",
         },

@@ -8,6 +8,7 @@ import {
     publishPost,
     schedulePost,
     updatePost,
+    getPostBySlug,
 } from "#controllers/posts.controller.js";
 import { validateBody } from "#middlewares/validate-body.middleware.js";
 import { updatePostValidator } from "#validators/create-post-validator.js";
@@ -31,11 +32,13 @@ router.post(
 
 router.get(
     API_ROUTES.POSTS.BY_ID,
-    apiKeyMiddleware(),
+    apiKeyMiddleware(true),
     getPostValidator,
     validateBody,
     getPostById,
 );
+
+router.get(API_ROUTES.POSTS.BY_SLUG, getPostBySlug);
 
 router.get(
     "/",

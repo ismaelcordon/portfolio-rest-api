@@ -27,13 +27,13 @@ jobs:
             - name: Install dependencies
               run: |
                   echo "Installing dependencies..."
-                  npm ci
+                  pnpm install --frozen-lockfile
                   echo "Dependencies installed!"
 
             - name: Build TypeScript
               run: |
                   echo "Building TypeScript..."
-                  npm run build
+                  pnpm run build
                   echo "Build completed!"
 
             - name: Clean deployment directory
@@ -76,7 +76,7 @@ jobs:
               run: |
                   echo "Installing production dependencies..."
                   cd $DEPLOY_PATH/app
-                  npm ci --omit=dev
+                  pnpm install --frozen-lockfile --prod
                   echo "Production dependencies installed!"
 
             - name: Restart server
@@ -99,7 +99,6 @@ jobs:
               if: always()
               env:
                   JOB_STATUS: ${{ job.status }}
-                  # Variables limpias, extraídas directamente de la Pull Request
                   SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
                   PR_TITLE: ${{ github.event.pull_request.title }}
                   AUTHOR: ${{ github.actor }}

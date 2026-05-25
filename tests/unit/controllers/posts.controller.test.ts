@@ -7,6 +7,7 @@ import {
     publishPost,
     schedulePost,
     updatePost,
+    getPostBySlug,
 } from "#controllers/posts.controller.js";
 import { NotFoundException } from "#exceptions/not-found.exception.js";
 import { sendSuccess, sendError } from "#helpers/response.helper.js";
@@ -15,10 +16,11 @@ import {
     findAllPosts,
     findPostById,
     insertNewPost,
-    updatePostEditableFields,
+    updatePostEditableFieldsAndOptionallyPublish,
     updatePostVisibility,
     updatePostToPublished,
     updatePostToScheduled,
+    findPostBySlug,
 } from "#services/posts.service.js";
 import { HTTP_STATUSES } from "#utils/constants.utils.js";
 import { Request, Response } from "express";
@@ -29,6 +31,8 @@ import {
     mockPaginatedPostsDto,
     mockPostDto,
     mockPublishedPost,
+    mockPublishedPostDto,
+    mockPublicPostDto,
     updatePostDto,
 } from "../../fixtures/post.fixtures";
 import { ConflictException } from "#exceptions/conflict.exception.js";
@@ -36,12 +40,13 @@ import { ConflictException } from "#exceptions/conflict.exception.js";
 vi.mock("#services/posts.service.js", () => ({
     insertNewPost: vi.fn(),
     findPostById: vi.fn(),
+    findPostBySlug: vi.fn(),
     findAllPosts: vi.fn(),
     updatePostVisibility: vi.fn(),
     destroyPost: vi.fn(),
     updatePostToPublished: vi.fn(),
     updatePostToScheduled: vi.fn(),
-    updatePostEditableFields: vi.fn(),
+    updatePostEditableFieldsAndOptionallyPublish: vi.fn(),
 }));
 
 vi.mock("#helpers/response.helper.js", () => ({
@@ -58,6 +63,7 @@ describe("post.controller", () => {
 
         req = {
             body: mockCreatePostDto,
+            query: {},
         } as Request;
 
         res = {
@@ -77,7 +83,7 @@ describe("post.controller", () => {
             await getAllPosts(req, res);
 
             // Assert
-            expect(findAllPosts).toHaveBeenCalledWith(1, 2, undefined, false);
+            expect(findAllPosts).toHaveBeenCalledWith(1, "en", 2, undefined, false);
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
                 "Posts successfully retrieved",
@@ -96,7 +102,7 @@ describe("post.controller", () => {
             await getAllPosts(req, res);
 
             // Assert
-            expect(findAllPosts).toHaveBeenCalledWith(1, 2, undefined, true);
+            expect(findAllPosts).toHaveBeenCalledWith(1, "en", 2, undefined, true);
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
                 "Posts successfully retrieved",
@@ -116,6 +122,7 @@ describe("post.controller", () => {
             // Assert
             expect(findAllPosts).toHaveBeenCalledWith(
                 1,
+                "en",
                 undefined,
                 undefined,
                 false,
@@ -140,6 +147,7 @@ describe("post.controller", () => {
             // Assert
             expect(findAllPosts).toHaveBeenCalledWith(
                 1,
+                "en",
                 undefined,
                 searchQuery,
                 false,
@@ -163,6 +171,7 @@ describe("post.controller", () => {
             // Assert
             expect(findAllPosts).toHaveBeenCalledWith(
                 1,
+                "en",
                 undefined,
                 undefined,
                 false,
@@ -273,7 +282,7 @@ describe("post.controller", () => {
     });
 
     describe("getPostById", () => {
-        it("Should return the post with the specified id with isAdmin false when not admin", async () => {
+        it("Should return the post with the specified id", async () => {
             // Arrange
             req.params = { id: "1" };
             vi.mocked(findPostById).mockResolvedValue(mockPostDto);
@@ -282,29 +291,7 @@ describe("post.controller", () => {
             await getPostById(req, res);
 
             // Assert
-            expect(findPostById).toHaveBeenCalledWith(
-                mockPostDto.postId,
-                false,
-            );
-            expect(sendSuccess).toHaveBeenCalledWith(
-                res,
-                "Post successfully retrieved",
-                mockPostDto,
-            );
-            expect(sendError).not.toHaveBeenCalled();
-        });
-
-        it("Should return the post with the specified id with isAdmin true when admin", async () => {
-            // Arrange
-            req.params = { id: "1" };
-            res.locals.isAdmin = true;
-            vi.mocked(findPostById).mockResolvedValue(mockPostDto);
-
-            // Act
-            await getPostById(req, res);
-
-            // Assert
-            expect(findPostById).toHaveBeenCalledWith(mockPostDto.postId, true);
+            expect(findPostById).toHaveBeenCalledWith(mockPostDto.postId);
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
                 "Post successfully retrieved",
@@ -325,7 +312,7 @@ describe("post.controller", () => {
             await getPostById(req, res);
 
             // Assert
-            expect(findPostById).toHaveBeenCalledWith(999, false);
+            expect(findPostById).toHaveBeenCalledWith(999);
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,
@@ -347,7 +334,70 @@ describe("post.controller", () => {
             await getPostById(req, res);
 
             // Assert
-            expect(findPostById).toHaveBeenCalledWith(1, false);
+            expect(findPostById).toHaveBeenCalledWith(1);
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                "Unexpected error",
+                "UNKNOWN_ERROR",
+            );
+        });
+    });
+
+    describe("getPostBySlug", () => {
+        it("Should return the post with the specified slug", async () => {
+            // Arrange
+            req.params = { slug: "without-title" };
+            vi.mocked(findPostBySlug).mockResolvedValue(mockPublicPostDto as any);
+
+            // Act
+            await getPostBySlug(req, res);
+
+            // Assert
+            expect(findPostBySlug).toHaveBeenCalledWith("without-title", "en");
+            expect(sendSuccess).toHaveBeenCalledWith(
+                res,
+                "Post successfully retrieved",
+                mockPublicPostDto,
+            );
+            expect(sendError).not.toHaveBeenCalled();
+        });
+
+        it("Should return controlled error response when service throws CustomException", async () => {
+            // Arrange
+            const notFoundException = new NotFoundException(
+                `Post with slug: "${mockPublishedPostDto.postId}" does not found`,
+            );
+            req.params = { slug: "XXXXXXXXXXXX" };
+            vi.mocked(findPostBySlug).mockRejectedValue(notFoundException);
+
+            // Act
+            await getPostBySlug(req, res);
+
+            // Assert
+            expect(findPostBySlug).toHaveBeenCalledWith("XXXXXXXXXXXX", "en");
+            expect(sendSuccess).not.toHaveBeenCalled();
+            expect(sendError).toHaveBeenCalledWith(
+                res,
+                notFoundException.message,
+                notFoundException.code,
+                null,
+                notFoundException.statusCode,
+            );
+        });
+
+        it("Should return internal server error response when service throws unexpected error", async () => {
+            // Arrange
+            vi.mocked(findPostBySlug).mockRejectedValue(
+                new Error("Database crashed"),
+            );
+            req.params = { slug: "XXXXXXXXXXXX" };
+
+            // Act
+            await getPostBySlug(req, res);
+
+            // Assert
+            expect(findPostBySlug).toHaveBeenCalledWith("XXXXXXXXXXXX", "en");
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,
@@ -663,23 +713,23 @@ describe("post.controller", () => {
             // Arrange
             req.params = { id: "999" };
             req.body = updatePostDto;
+            req.query = {};
 
             const notFoundException = new NotFoundException(
                 "Post with id 999 not found",
             );
 
-            vi.mocked(updatePostEditableFields).mockRejectedValue(
-                notFoundException,
-            );
+            vi.mocked(
+                updatePostEditableFieldsAndOptionallyPublish,
+            ).mockRejectedValue(notFoundException);
 
             // Act
             await updatePost(req, res);
 
             // Assert
-            expect(updatePostEditableFields).toHaveBeenCalledWith(
-                999,
-                updatePostDto,
-            );
+            expect(
+                updatePostEditableFieldsAndOptionallyPublish,
+            ).toHaveBeenCalledWith(999, updatePostDto, false);
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,
@@ -694,23 +744,23 @@ describe("post.controller", () => {
             // Arrange
             req.params = { id: "1" };
             req.body = updatePostDto;
+            req.query = {};
 
             const conflictException = new ConflictException(
                 "Post with id 1 cannot be updated because it is already published",
             );
 
-            vi.mocked(updatePostEditableFields).mockRejectedValue(
-                conflictException,
-            );
+            vi.mocked(
+                updatePostEditableFieldsAndOptionallyPublish,
+            ).mockRejectedValue(conflictException);
 
             // Act
             await updatePost(req, res);
 
             // Assert
-            expect(updatePostEditableFields).toHaveBeenCalledWith(
-                1,
-                updatePostDto,
-            );
+            expect(
+                updatePostEditableFieldsAndOptionallyPublish,
+            ).toHaveBeenCalledWith(1, updatePostDto, false);
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,
@@ -725,17 +775,19 @@ describe("post.controller", () => {
             // Arrange
             req.params = { id: "1" };
             req.body = updatePostDto;
+            req.query = {};
 
-            vi.mocked(updatePostEditableFields).mockResolvedValue(undefined);
+            vi.mocked(
+                updatePostEditableFieldsAndOptionallyPublish,
+            ).mockResolvedValue(undefined);
 
             // Act
             await updatePost(req, res);
 
             // Assert
-            expect(updatePostEditableFields).toHaveBeenCalledWith(
-                1,
-                updatePostDto,
-            );
+            expect(
+                updatePostEditableFieldsAndOptionallyPublish,
+            ).toHaveBeenCalledWith(1, updatePostDto, false);
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
                 "Post successfully updated",
@@ -747,19 +799,19 @@ describe("post.controller", () => {
             // Arrange
             req.params = { id: "1" };
             req.body = updatePostDto;
+            req.query = {};
 
-            vi.mocked(updatePostEditableFields).mockRejectedValue(
-                new Error("Database crashed"),
-            );
+            vi.mocked(
+                updatePostEditableFieldsAndOptionallyPublish,
+            ).mockRejectedValue(new Error("Database crashed"));
 
             // Act
             await updatePost(req, res);
 
             // Assert
-            expect(updatePostEditableFields).toHaveBeenCalledWith(
-                1,
-                updatePostDto,
-            );
+            expect(
+                updatePostEditableFieldsAndOptionallyPublish,
+            ).toHaveBeenCalledWith(1, updatePostDto, false);
             expect(sendSuccess).not.toHaveBeenCalled();
             expect(sendError).toHaveBeenCalledWith(
                 res,

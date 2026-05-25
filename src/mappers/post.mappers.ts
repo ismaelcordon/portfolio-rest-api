@@ -1,8 +1,8 @@
 import { PostDto } from "#dtos/Post.dto.js";
 import { PostModel } from "#models/sequelize/post.sequelize.js";
 import { TagModel } from "#models/sequelize/post-tag.sequelize.js";
-import { PaginatedPostResponseDto } from "#dtos/PaginatedPostResponse.dto";
-import { POSTS_PER_PAGE } from "#utils/constants.utils";
+import { PaginatedPostResponseDto } from "#dtos/PaginatedPostResponse.dto.js";
+import { POSTS_PER_PAGE } from "#utils/constants.utils.js";
 
 export const toPostResponseDto = (
     post: PostModel,

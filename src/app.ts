@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
-import { API_ROUTES } from "./utils/constants.utils";
-import apiRouter from "./routes/api.routes";
+import { API_ROUTES } from "./utils/constants.utils.js";
+import apiRouter from "./routes/api.routes.js";
 import { snakeCaseResponseMiddleware } from "#middlewares/snake-case-response.middleware.js";
 
 export function createApp(): Express {

@@ -1,18 +1,18 @@
-import { PostModel } from "#models/sequelize/post.sequelize";
-import { PostStatus } from "#types/post.types";
-import { DEFAULT_POST_TITLE, POSTS_PER_PAGE } from "#utils/constants.utils";
+import { PostModel } from "#models/sequelize/post.sequelize.js";
+import { PostStatus } from "#types/post.types.js";
+import { DEFAULT_POST_TITLE, POSTS_PER_PAGE } from "#utils/constants.utils.js";
 import { Op, WhereOptions } from "sequelize";
-import { NotFoundException } from "../exceptions/not-found.exception";
+import { NotFoundException } from "#exceptions/not-found.exception.js";
 import {
     toPaginatedPostsResponseDto,
     toPostResponseDto,
-} from "../mappers/post.mappers";
+} from "../mappers/post.mappers.js";
 import {
     checkPostTagById,
     checkPostTagsByIds,
     findFirstTag,
-} from "./post-tags.service";
-import { ConflictException } from "#exceptions/conflict.exception";
+} from "./post-tags.service.js";
+import { ConflictException } from "#exceptions/conflict.exception.js";
 import { handleServiceError } from "#helpers/error.helper.js";
 import { UpdatePostRequestDto } from "#dtos/UpdatePostRequest.dto.js";
 import { generateSlug } from "#utils/slug.utils.js";

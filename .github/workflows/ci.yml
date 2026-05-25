@@ -5,6 +5,8 @@ on:
         branches:
             - main
             - develop
+env:
+    DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
 
 jobs:
     test:
@@ -17,7 +19,7 @@ jobs:
               run: pnpm install --frozen-lockfile
 
             - name: Copy local .env.test
-              run: cp /Users/icdominguez/deployments/portfolio_rest_api/shared/.env.test .env.test
+              run: cp $DEPLOY_PATH/shared/.env.test .env.test
 
             - name: Run unit tests with coverage
               run: pnpm test:coverage

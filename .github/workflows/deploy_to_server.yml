@@ -6,13 +6,13 @@ on:
             - develop
         types:
             - closed
+    workflow_dispatch:
 
 env:
     DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
 
 jobs:
     deploy:
-        if: github.event.pull_request.merged == true
         runs-on: self-hosted
         steps:
             - name: Checkout code
@@ -20,9 +20,9 @@ jobs:
 
             - name: Log - Starting deployment
               run: |
-                  echo "=========================================="
+                  echo "======================================================"
                   echo "Starting deployment for branch: ${{ github.ref_name }}"
-                  echo "=========================================="
+                  echo "======================================================"
 
             - name: Install dependencies
               run: |
@@ -38,14 +38,14 @@ jobs:
 
             - name: Clean deployment directory
               run: |
-                  echo "Cleaning $DEPLOY_PATH/app..."
+                  echo "Cleaning $DEPLOY_PATH/app"
                   mkdir -p $DEPLOY_PATH/app
                   rm -rf $DEPLOY_PATH/app/*
                   echo "Directory cleaned!"
 
             - name: Copy build artifacts
               run: |
-                  echo "Copying dist, package.json and .env..."
+                  echo "Copying dist, package.json and pnpm.lock.yaml"
                   rsync -av $GITHUB_WORKSPACE/dist/ $DEPLOY_PATH/app/dist/
                   cp $GITHUB_WORKSPACE/package.json $DEPLOY_PATH/app/package.json
                   cp $GITHUB_WORKSPACE/pnpm-lock.yaml $DEPLOY_PATH/app/pnpm-lock.yaml
@@ -83,7 +83,6 @@ jobs:
               run: |
                   echo "Restarting server..."
                   cd $DEPLOY_PATH/app
-                  # Añadimos --update-env para que lea el nuevo .env generado
                   pm2 restart portfolio-rest-api --update-env || pm2 start dist/server.js --name portfolio-rest-api
                   echo "Server restarted!"
 
@@ -104,24 +103,24 @@ jobs:
                   AUTHOR: ${{ github.actor }}
                   REPOSITORY: ${{ github.repository }}
               run: |
-                  echo "Preparando mensaje de Telegram..."
+                  echo "... Setting up telegram message ..."
 
                   # Definimos el emoji y texto de estado
                   if [ "$JOB_STATUS" = "success" ]; then
-                    STATUS_TEXT="✅ <b>DESPLIEGUE EXITOSO</b>"
+                    STATUS_TEXT="✅ <b>DEPLOYMENT SUCCESSFUL</b>"
                   else
-                    STATUS_TEXT="❌ <b>ERROR EN EL DESPLIEGUE</b>"
+                    STATUS_TEXT="❌ <b>ERROR IN THE DEPLOYMENT</b>"
                   fi
 
                   # Construimos el mensaje usando Markdown
                   MESSAGE=$(cat <<EOF
                   $STATUS_TEXT
 
-                  📦 <b>Proyecto:</b> $REPOSITORY
-                  🚀 <b>Entorno:</b> Develop
-                  🌿 <b>Rama origen:</b> $SOURCE_BRANCH
+                  📦 <b>Project:</b> $REPOSITORY
+                  🚀 <b>Environment:</b> Develop
+                  🌿 <b>Source Branch:</b> $SOURCE_BRANCH
                   📝 <b>PR:</b> $PR_TITLE
-                  👤 <b>Autor:</b> $AUTHOR
+                  👤 <b>Author:</b> $AUTHOR
                   EOF
                   )
 

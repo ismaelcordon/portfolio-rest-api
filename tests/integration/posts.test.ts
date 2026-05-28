@@ -1,6 +1,6 @@
 import { API_ROUTES, HTTP_STATUSES } from "#utils/constants.utils.js";
 import { describe, expect, it } from "vitest";
-import { createApp } from "../../src/app";
+import { createApp } from "../../src/app.js";
 import request from "supertest";
 import {
     createPostDto,
@@ -8,12 +8,12 @@ import {
     currentDatePlus3Hours,
     postModelArray,
     updatePostRequestDto,
-} from "../fixtures/post.fixtures";
+} from "../fixtures/post.fixtures.js";
 import { PostModel } from "#models/sequelize/post.sequelize.js";
 import { TagModel } from "#models/sequelize/post-tag.sequelize.js";
 import { PostStatus } from "#types/post.types.js";
-import { withApiKey } from "../helpers/with-api-key.helpers";
-import { emptyPostDto } from "../fixtures/post.fixtures";
+import { withApiKey } from "../helpers/with-api-key.helpers.js";
+import { emptyPostDto } from "../fixtures/post.fixtures.js";
 
 const createNewPostEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}`;
 const findPostByIdEndpoint = `${API_ROUTES.BASE}${API_ROUTES.POSTS.BASE}${API_ROUTES.POSTS.BY_ID}`;

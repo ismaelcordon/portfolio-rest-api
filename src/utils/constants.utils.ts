@@ -40,3 +40,8 @@ export const API_ROUTES = {
 export const DEFAULT_POST_TITLE = "Without title";
 
 export const POSTS_PER_PAGE = 20;
+
+export const CV_FILENAMES = {
+    es: "CV_Ismael_Cordon_Dominguez_Spanish.pdf",
+    en: "CV_Ismael_Cordon_Dominguez_English.pdf",
+};

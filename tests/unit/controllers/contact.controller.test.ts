@@ -1,10 +1,10 @@
-import { sendError, sendSuccess } from "#helpers/response.helper";
+import { sendError, sendSuccess } from "#helpers/response.helper.js";
 import { Request, Response } from "express";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { sendContactDto } from "../../fixtures/contact.fixtures";
-import { sendContact } from "#controllers/contact.controller";
-import { sendContactEmail } from "#services/email.service";
-import { InternalServerException } from "#exceptions/internal-server.exception";
+import { sendContactDto } from "../../fixtures/contact.fixtures.js";
+import { sendContact } from "#controllers/contact.controller.js";
+import { sendContactEmail } from "#services/email.service.js";
+import { InternalServerException } from "#exceptions/internal-server.exception.js";
 
 vi.mock("#services/email.service.js", () => ({
     sendContactEmail: vi.fn(),

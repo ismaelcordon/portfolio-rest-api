@@ -34,7 +34,7 @@ import {
     mockPublishedPostDto,
     mockPublicPostDto,
     updatePostDto,
-} from "../../fixtures/post.fixtures";
+} from "../../fixtures/post.fixtures.js";
 import { ConflictException } from "#exceptions/conflict.exception.js";
 
 vi.mock("#services/posts.service.js", () => ({
@@ -83,7 +83,13 @@ describe("post.controller", () => {
             await getAllPosts(req, res);
 
             // Assert
-            expect(findAllPosts).toHaveBeenCalledWith(1, "en", 2, undefined, false);
+            expect(findAllPosts).toHaveBeenCalledWith(
+                1,
+                "en",
+                2,
+                undefined,
+                false,
+            );
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
                 "Posts successfully retrieved",
@@ -102,7 +108,13 @@ describe("post.controller", () => {
             await getAllPosts(req, res);
 
             // Assert
-            expect(findAllPosts).toHaveBeenCalledWith(1, "en", 2, undefined, true);
+            expect(findAllPosts).toHaveBeenCalledWith(
+                1,
+                "en",
+                2,
+                undefined,
+                true,
+            );
             expect(sendSuccess).toHaveBeenCalledWith(
                 res,
                 "Posts successfully retrieved",
@@ -348,7 +360,9 @@ describe("post.controller", () => {
         it("Should return the post with the specified slug", async () => {
             // Arrange
             req.params = { slug: "without-title" };
-            vi.mocked(findPostBySlug).mockResolvedValue(mockPublicPostDto as any);
+            vi.mocked(findPostBySlug).mockResolvedValue(
+                mockPublicPostDto as any,
+            );
 
             // Act
             await getPostBySlug(req, res);

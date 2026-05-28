@@ -1,6 +1,6 @@
-import { sendContactEmail } from "#services/email.service";
+import { sendContactEmail } from "#services/email.service.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { sendContactDto } from "../../fixtures/contact.fixtures";
+import { sendContactDto } from "../../fixtures/contact.fixtures.js";
 
 const sendMailMock = vi.fn();
 
@@ -11,7 +11,7 @@ vi.mock("#config/email.config.js", () => ({
 }));
 
 import { getTransporter } from "#config/email.config.js";
-import { InternalServerException } from "#exceptions/internal-server.exception";
+import { InternalServerException } from "#exceptions/internal-server.exception.js";
 
 describe("email.service", () => {
     beforeEach(() => {

@@ -1,13 +1,13 @@
-import { API_ROUTES, HTTP_STATUSES } from "#utils/constants.utils";
+import { API_ROUTES, HTTP_STATUSES } from "#utils/constants.utils.js";
 import request from "supertest";
-import { createApp } from "../../src/app";
+import { createApp } from "../../src/app.js";
 import {
     sendContactDtoWithInvalidEmail,
     sendContactDtoWithNoMessage,
     sendContactDtoWithNoEmail,
     sendContactDtoWithNoName,
     sendContactDto,
-} from "../fixtures/contact.fixtures";
+} from "../fixtures/contact.fixtures.js";
 
 vi.mock("#config/email.config.js", () => ({
     getTransporter: vi.fn(() => ({

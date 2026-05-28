@@ -5,7 +5,8 @@ import { Request, Response } from "express";
 
 export const getCvPdf = async (req: Request, res: Response) => {
     try {
-        const acceptLanguage = req.headers["accept-language"];
+        const acceptLanguage =
+            (req.query.lang as string) ?? req.headers["accept-language"];
 
         const cvPath = await findCvPdfByLanguage(acceptLanguage);
 

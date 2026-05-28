@@ -4,6 +4,7 @@ import path from "path";
 import { findCvPdfByLanguage, resolveLang } from "#services/cv.service.js";
 import { NotFoundException } from "#exceptions/not-found.exception.js";
 import { InternalServerException } from "#exceptions/internal-server.exception.js";
+import { CV_FILENAMES } from "#utils/constants.utils.js";
 
 vi.mock("fs", () => {
     return {
@@ -40,7 +41,7 @@ describe("cv.service", () => {
             const expectedPath = path.resolve(
                 process.cwd(),
                 "assets",
-                "CV_Ismael_Cordón_Domínguez_Spanish.pdf",
+                CV_FILENAMES.es,
             );
 
             expect(fs.existsSync).toHaveBeenCalledWith(expectedPath);
@@ -58,7 +59,7 @@ describe("cv.service", () => {
             const expectedPath = path.resolve(
                 process.cwd(),
                 "assets",
-                "CV_Ismael_Cordón_Domínguez_English.pdf",
+                CV_FILENAMES.en,
             );
 
             expect(fs.existsSync).toHaveBeenCalledWith(expectedPath);
@@ -76,7 +77,7 @@ describe("cv.service", () => {
             const expectedPath = path.resolve(
                 process.cwd(),
                 "assets",
-                "CV_Ismael_Cordón_Domínguez_English.pdf",
+                CV_FILENAMES.en,
             );
 
             expect(fs.existsSync).toHaveBeenCalledWith(expectedPath);
@@ -94,7 +95,7 @@ describe("cv.service", () => {
             const expectedPath = path.resolve(
                 process.cwd(),
                 "assets",
-                "CV_Ismael_Cordón_Domínguez_English.pdf",
+                CV_FILENAMES.en,
             );
 
             expect(fs.existsSync).toHaveBeenCalledWith(expectedPath);
@@ -111,7 +112,7 @@ describe("cv.service", () => {
             // Assert
             await expect(result).rejects.toThrow(NotFoundException);
             await expect(result).rejects.toThrow(
-                "CV file not found: CV_Ismael_Cordón_Domínguez_Spanish.pdf",
+                `CV file not found: ${CV_FILENAMES.es}`,
             );
         });
 
@@ -125,7 +126,7 @@ describe("cv.service", () => {
             // Assert
             await expect(result).rejects.toThrow(NotFoundException);
             await expect(result).rejects.toThrow(
-                "CV file not found: CV_Ismael_Cordón_Domínguez_English.pdf",
+                `CV file not found: ${CV_FILENAMES.en}`,
             );
         });
 

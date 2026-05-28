@@ -4,8 +4,7 @@ on:
     pull_request:
         branches:
             - develop
-        types:
-            - closed
+    workflow_dispatch:
 
 env:
     DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
@@ -20,9 +19,13 @@ jobs:
 
             - name: Log - Starting deployment
               run: |
-                  echo "=========================================="
-                  echo "Starting deployment for branch: ${{ github.ref_name }}"
-                  echo "=========================================="
+                  echo "======================================================"
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                    echo "Starting MANUAL deployment on branch: ${{ github.ref_name }}"
+                  else
+                    echo "Starting deployment for branch: ${{ github.ref_name }}"
+                  fi
+                  echo "======================================================"
 
             - name: Install dependencies
               run: |
@@ -69,6 +72,7 @@ jobs:
                   SMTP_PASS=${{ secrets.SMTP_PASS }}
                   CONTACT_TO=${{ secrets.CONTACT_TO }}
                   CONTACT_FROM=${{ secrets.CONTACT_FROM }}
+                  ASSETS_PATH=${{ secrets.ASSETS_PATH }}
                   EOF
                   echo ".env generated!"
 
@@ -99,34 +103,56 @@ jobs:
               if: always()
               env:
                   JOB_STATUS: ${{ job.status }}
-                  SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
-                  PR_TITLE: ${{ github.event.pull_request.title }}
                   AUTHOR: ${{ github.actor }}
                   REPOSITORY: ${{ github.repository }}
+                  BRANCH: ${{ github.ref_name }}
+                  COMMIT_SHA: ${{ github.sha }}
+                  COMMIT_MSG: ${{ github.event.head_commit.message }}
+                  EVENT_NAME: ${{ github.event_name }}
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+                  RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
               run: |
                   echo "Preparando mensaje de Telegram..."
 
-                  # Definimos el emoji y texto de estado
+                  # Status
                   if [ "$JOB_STATUS" = "success" ]; then
                     STATUS_TEXT="✅ <b>DESPLIEGUE EXITOSO</b>"
                   else
-                    STATUS_TEXT="❌ <b>ERROR EN EL DESPLIEGUE</b>"
+                    STATUS_TEXT="❌ <b>DEPLOYMENT FAILED</b>"
                   fi
 
-                  # Construimos el mensaje usando Markdown
-                  MESSAGE=$(cat <<EOF
-                  $STATUS_TEXT
+                  # Trigger origin
+                  if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+                    TRIGGER_TEXT="🖐 Manually triggered"
+                  elif [ -n "$PR_TITLE" ]; then
+                    TRIGGER_TEXT="🔀 PR: <i>${PR_TITLE}</i>"
+                  else
+                    TRIGGER_TEXT="⬆️ Push to <b>${BRANCH}</b>"
+                  fi
 
-                  📦 <b>Proyecto:</b> $REPOSITORY
-                  🚀 <b>Entorno:</b> Develop
-                  🌿 <b>Rama origen:</b> $SOURCE_BRANCH
-                  📝 <b>PR:</b> $PR_TITLE
-                  👤 <b>Autor:</b> $AUTHOR
-                  EOF
-                  )
+                  # Short commit SHA
+                  SHORT_SHA=$(echo "$COMMIT_SHA" | cut -c1-7)
+
+                  MESSAGE=$(cat <<EOF
+                    $STATUS_TEXT
+                    $TRIGGER_TEXT
+
+                    📦 <b>Repo:</b> $REPOSITORY
+                    🌿 <b>Branch:</b> $BRANCH
+                    🔖 <b>Commit:</b> <code>$SHORT_SHA</code> — $COMMIT_MSG
+                    👤 <b>Author:</b> $AUTHOR
+                    🔗 <a href="$RUN_URL">View run</a>
+                  EOF)
 
                   # Enviamos el mensaje a la API de Telegram
                   curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
                     -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
                     -d text="$MESSAGE" \
                     -d parse_mode="HTML"
+
+            - name: Log
+              run: |
+                  echo "=========================================="
+                  echo "✅ DEPLOYMENT COMPLETED"
+                  echo "=========================================="

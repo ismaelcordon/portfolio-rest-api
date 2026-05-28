@@ -1,6 +1,10 @@
-import { API_ROUTES, HTTP_STATUSES } from "#utils/constants.utils.js";
+import {
+    API_ROUTES,
+    CV_FILENAMES,
+    HTTP_STATUSES,
+} from "#utils/constants.utils.js";
 import { describe, expect, it } from "vitest";
-import { createApp } from "../../src/app";
+import { createApp } from "../../src/app.js";
 import request from "supertest";
 import fs from "fs";
 import path from "path";
@@ -29,11 +33,7 @@ describe("CV", () => {
             const app = createApp();
 
             const expectedPdf = fs.readFileSync(
-                path.resolve(
-                    process.cwd(),
-                    "assets",
-                    "CV_Ismael_Cordón_Domínguez_Spanish.pdf",
-                ),
+                path.resolve(process.cwd(), "assets", CV_FILENAMES.es),
             );
 
             // Act
@@ -57,11 +57,7 @@ describe("CV", () => {
             const app = createApp();
 
             const expectedPdf = fs.readFileSync(
-                path.resolve(
-                    process.cwd(),
-                    "assets",
-                    "CV_Ismael_Cordón_Domínguez_English.pdf",
-                ),
+                path.resolve(process.cwd(), "assets", CV_FILENAMES.en),
             );
 
             // Act
@@ -85,11 +81,7 @@ describe("CV", () => {
             const app = createApp();
 
             const expectedPdf = fs.readFileSync(
-                path.resolve(
-                    process.cwd(),
-                    "assets",
-                    "CV_Ismael_Cordón_Domínguez_English.pdf",
-                ),
+                path.resolve(process.cwd(), "assets", CV_FILENAMES.en),
             );
 
             // Act
@@ -112,11 +104,7 @@ describe("CV", () => {
             const app = createApp();
 
             const expectedPdf = fs.readFileSync(
-                path.resolve(
-                    process.cwd(),
-                    "assets",
-                    "CV_Ismael_Cordón_Domínguez_English.pdf",
-                ),
+                path.resolve(process.cwd(), "assets", CV_FILENAMES.en),
             );
 
             // Act

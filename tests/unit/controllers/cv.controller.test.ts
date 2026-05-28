@@ -22,6 +22,7 @@ describe("cv.controller", () => {
 
         req = {
             headers: {},
+            query: {},
         } as Request;
 
         res = {
@@ -33,7 +34,7 @@ describe("cv.controller", () => {
         it("Should return CV pdf file successfully with accept-language es", async () => {
             // Arrange
             const cvPath =
-                "/project/assets/CV_Ismael_Cordón_Domínguez_Spanish.pdf";
+                "/project/assets/CV_Ismael_Cordon_Dominguez_Spanish.pdf";
 
             req.headers = {
                 "accept-language": "es",
@@ -58,7 +59,7 @@ describe("cv.controller", () => {
         it("Should return CV pdf file successfully with accept-language en", async () => {
             // Arrange
             const cvPath =
-                "/project/assets/CV_Ismael_Cordón_Domínguez_English.pdf";
+                "/project/assets/CV_Ismael_Cordon_Dominguez_English.pdf";
 
             req.headers = {
                 "accept-language": "en",
@@ -83,7 +84,7 @@ describe("cv.controller", () => {
         it("Should call findCvPdfByLanguage with undefined when accept-language is not provided", async () => {
             // Arrange
             const cvPath =
-                "/project/assets/CV_Ismael_Cordón_Domínguez_English.pdf";
+                "/project/assets/CV_Ismael_Cordon_Dominguez_English.pdf";
 
             req.headers = {};
 
@@ -110,7 +111,7 @@ describe("cv.controller", () => {
             };
 
             const notFoundException = new NotFoundException(
-                "CV file not found: CV_Ismael_Cordón_Domínguez_Spanish.pdf",
+                "CV file not found: CV_Ismael_Cordon_Dominguez_Spanish.pdf",
             );
 
             vi.mocked(findCvPdfByLanguage).mockRejectedValue(notFoundException);
